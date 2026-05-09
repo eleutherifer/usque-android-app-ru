@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#0F172A" android:pathData="M18,4h72a14,14 0,0 1,14 14v72a14,14 0,0 1,-14 14H18a14,14 0,0 1,-14 -14V18a14,14 0,0 1,14 -14z" />
+    <path android:fillColor="#1D4ED8" android:fillAlpha="0.9" android:pathData="M16,76c12,-22 28,-36 48,-41 13,-3 24,-1 31,7v46c0,4 -3,7 -7,7H25c-8,0 -13,-9 -9,-19z" />
+    <path android:fillColor="#F97316" android:pathData="M37,44c5,-10 24,-10 31,0 6,8 5,26 -4,35 -6,6 -18,6 -24,0 -9,-9 -10,-27 -3,-35z" />
+    <path android:fillColor="#FB923C" android:pathData="M43,39c4,-8 18,-8 22,0 3,6 1,11 -4,14 -5,3 -10,3 -15,0 -5,-3 -7,-8 -3,-14z" />
+    <path android:fillColor="#0F172A" android:pathData="M47,44a3,3 0,1 0,0.1 0M59,44a3,3 0,1 0,0.1 0" />
+    <path android:fillColor="#FED7AA" android:pathData="M49,54h10v4H49z" />
+    <path android:fillColor="#F97316" android:pathData="M34,55c-10,-7 -17,-5 -22,1 -4,5 -4,13 1,18 6,5 15,1 19,-6l-7,-4c-2,4 -6,5 -8,3 -2,-2 -2,-5 0,-7 3,-3 8,-2 14,2z" />
+    <path android:fillColor="#F97316" android:pathData="M74,55c10,-7 17,-5 22,1 4,5 4,13 -1,18 -6,5 -15,1 -19,-6l7,-4c2,4 6,5 8,3 2,-2 2,-5 0,-7 -3,-3 -8,-2 -14,2z" />
+    <path android:strokeColor="#FDBA74" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M44,66c-8,4 -15,9 -20,17M64,66c8,4 15,9 20,17M48,75c-3,5 -5,10 -6,16M60,75c3,5 5,10 6,16" />
+    <path android:strokeColor="#93C5FD" android:strokeWidth="5" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M29,27h15M64,27h15M36,20l8,7 -8,7M72,20l-8,7 8,7" />
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.95" android:pathData="M78,31m-10,0a10,10 0,1 0,20 0a10,10 0,1 0,-20 0" />
+    <path android:fillColor="#2563EB" android:pathData="M78,24l3,5 6,1 -4,4 1,6 -6,-3 -6,3 1,-6 -4,-4 6,-1z" />
+</vector>
