@@ -1,123 +1,131 @@
-# Usque VPN for Android
+# Usque Android App
 
-A native Android VPN application powered by Cloudflare WARP using the MASQUE protocol.
+A native Android VPN app for Cloudflare WARP / Zero Trust, built around the MASQUE-based Go client from:
+
+<https://github.com/Diniboy1123/usque>
+
+This repository contains the Android wrapper, UI, `VpnService` integration, and the prebuilt Android library artifacts required to build the APK.
+
+## Upstream attribution
+
+The core WARP / MASQUE client logic comes from the upstream `usque` project:
+
+- Upstream repository: <https://github.com/Diniboy1123/usque>
+- Upstream language: Go
+- Android integration: prebuilt `usque.aar` / `usque-classes.jar` exposed through the `usqueandroid` package
+
+This Android app adds:
+
+- Kotlin Android UI
+- Android `VpnService` lifecycle management
+- TUN fd handoff through `startTunnelWithFd`
+- Cloudflare WARP registration and connection controls
+- Global proxy / per-app proxy mode
+- Multi-profile connection settings
+- Mobile-first Material-style UI
 
 ## Features
 
-- 🔒 **Secure VPN** - Uses Cloudflare WARP infrastructure
-- 🌐 **Dual Stack** - Full IPv4 and IPv6 support
-- 🔧 **Customizable** - Configure SNI and endpoints for censorship circumvention
-- 📱 **Native Android** - Built with Kotlin and Android VpnService
-- ⚡ **Fast** - MASQUE/QUIC protocol for optimal performance
+- Native Android VPN implementation using `VpnService`
+- Cloudflare WARP / MASQUE connection through the upstream `usque` core
+- Automatic first-run registration
+- Global proxy and selected-app proxy modes
+- App selection list with search, select all, and clear selection
+- Multiple connection profiles
+- Chinese / English language toggle
+- Runtime speed display based on Android `TrafficStats`
 
-## Prerequisites
+## Repository contents
 
-1. **Build the Go library first:**
-   ```bash
-   cd ../
-   make android
-   ```
+Important tracked files:
 
-2. **Copy the AAR to libs:**
-   ```bash
-   mkdir -p app/libs
-   cp ../usque.aar app/libs/
-   ```
-
-3. **Android Studio** or Gradle 8.5+
-
-## Building
-
-### From Android Studio
-1. Open this directory in Android Studio
-2. Sync Gradle
-3. Build → Build APK
-
-### From Command Line
-```bash
-./gradlew assembleDebug
-# or
-./gradlew assembleRelease
+```text
+app/src/main/kotlin/com/diniboy/usqueandroid/MainActivity.kt
+app/src/main/kotlin/com/diniboy/usqueandroid/UsqueVpnService.kt
+app/libs/usque.aar
+app/libs/usque-classes.jar
+.github/workflows/android.yml
+docs/github-actions-signing.md
 ```
 
-Output: `app/build/outputs/apk/debug/app-debug.apk`
+The repository intentionally does **not** include stale Speedgo test code, local probes, APK build outputs, local Gradle caches, `local.properties`, or signing keystores.
 
-## Usage
+## Building locally
 
-1. **First Launch**: App will automatically register with Cloudflare WARP
-2. **Connect**: Tap the "Connect" button
-3. **Settings**: Configure SNI and endpoints before connecting
+Use JDK 17 and Gradle / Android Gradle Plugin compatible with this project.
 
-### Settings Options
+```bash
+gradle assembleDebug
+```
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| SNI | Server Name Indication for TLS | `www.visa.cn` |
-| IPv4 Endpoint | WARP server IPv4 | From registration |
-| IPv6 Endpoint | WARP server IPv6 | From registration |
-| Use IPv6 | Connect via IPv6 endpoint | Off |
+Release build:
+
+```bash
+gradle assembleRelease
+```
+
+If no production signing config is provided, release APK output may be unsigned depending on the environment.
+
+## GitHub Actions APK build
+
+The repository includes a GitHub Actions workflow at:
+
+```text
+.github/workflows/android.yml
+```
+
+Behavior:
+
+- Without signing secrets: builds a debug APK artifact.
+- With signing secrets: builds a signed release APK artifact.
+- On GitHub Release publish: uploads APK artifacts to the Release.
+
+See signing setup instructions:
+
+```text
+docs/github-actions-signing.md
+```
+
+Do **not** commit keystore files to this repository. Use GitHub Actions Secrets instead.
+
+## Signing secrets
+
+For signed release builds in GitHub Actions, configure these repository secrets:
+
+```text
+ANDROID_KEYSTORE_BASE64
+ANDROID_KEYSTORE_PASSWORD
+ANDROID_KEY_ALIAS
+ANDROID_KEY_PASSWORD
+```
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────┐
-│           Android App (Kotlin)          │
-├─────────────────────────────────────────┤
-│  MainActivity     │  UsqueVpnService    │
-│  - Settings UI    │  - TUN interface    │
-│  - Connect/Stop   │  - VPN lifecycle    │
-└─────────┬─────────┴──────────┬──────────┘
-          │                    │
-          │    usque.aar       │
-          │   (Go Library)     │
-          ▼                    ▼
-┌─────────────────────────────────────────┐
-│         usqueandroid Package            │
-│  - StartTunnel()  - SetSNI()            │
-│  - StopTunnel()   - SetEndpointV4/V6()  │
-│  - Register()     - GetAssignedIP()     │
-└─────────────────┬───────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────┐
-│         Cloudflare WARP Network         │
-│            (MASQUE/QUIC)                │
-└─────────────────────────────────────────┘
+```text
+Android App / Kotlin UI
+        │
+        ▼
+Android VpnService + real TUN fd
+        │
+        ▼
+usqueandroid package from usque.aar / usque-classes.jar
+        │
+        ▼
+Upstream Go usque core
+        │
+        ▼
+Cloudflare WARP / MASQUE
 ```
 
-## Project Structure
+## Notes
 
-```
-usque-vpn/
-├── app/
-│   ├── libs/                    # usque.aar goes here
-│   ├── src/main/
-│   │   ├── kotlin/.../
-│   │   │   ├── MainActivity.kt      # Main UI
-│   │   │   └── UsqueVpnService.kt   # VPN service
-│   │   ├── res/                 # Layouts, drawables
-│   │   └── AndroidManifest.xml
-│   └── build.gradle.kts
-├── build.gradle.kts
-├── settings.gradle.kts
-└── README.md
-```
-
-## Troubleshooting
-
-### VPN won't connect
-- Check if another VPN is active
-- Verify internet connection
-- Try changing the endpoint
-
-### No IPv6
-- Ensure your network supports IPv6
-- Check if IPv6 address was assigned in registration
-
-### Settings reset after restart
-- Settings are saved in SharedPreferences
-- If issue persists, check app storage permissions
+- The app uses `builder.establish()` to obtain a real Android TUN fd.
+- The detached fd is passed to the upstream native layer via `startTunnelWithFd`.
+- Endpoint is configured separately through the `usqueandroid` API before starting the tunnel.
+- Per-app proxy mode uses Android `VpnService.Builder.addAllowedApplication()`.
 
 ## License
 
-MIT License - See [LICENSE](../LICENSE.md)
+This repository is an Android app wrapper around the upstream `usque` project. Check the upstream project license and comply with its terms when redistributing the combined work:
+
+<https://github.com/Diniboy1123/usque>
