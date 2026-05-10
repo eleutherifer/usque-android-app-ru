@@ -83,14 +83,29 @@ jobs:
           name: usque-android-apk
           path: dist/*
 
-      - name: Upload APK to latest GitHub Release
+      - name: Upload APK to versioned GitHub Release
         if: ${{ github.event_name != 'pull_request' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          latest_tag="$(gh release list --limit 1 --json tagName --jq '.[0].tagName')"
-          if [ -z "$latest_tag" ] || [ "$latest_tag" = "null" ]; then
-            echo "No GitHub Release found; skipping release asset upload."
-            exit 0
+          version_name="$(sed -n "s/^[[:space:]]*versionName[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" app/build.gradle | head -n 1)"
+          if [ -z "$version_name" ]; then
+            echo "Could not read versionName from app/build.gradle" >&2
+            exit 1
           fi
-          gh release upload "$latest_tag" dist/* --clobber
+
+          tag="v$version_name"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" \
+              --target "$GITHUB_SHA" \
+              --title "Usque Android App $tag" \
+              --notes "Automated APK build for $tag."
+          fi
+
+          for apk in dist/*.apk; do
+            base="$(basename "$apk" .apk)"
+            cp "$apk" "dist/${base}-${tag}.apk"
+          done
+          sha256sum dist/*-${tag}.apk > "dist/SHA256SUMS-${tag}.txt"
+
+          gh release upload "$tag" dist/*-${tag}.apk "dist/SHA256SUMS-${tag}.txt" --clobber
