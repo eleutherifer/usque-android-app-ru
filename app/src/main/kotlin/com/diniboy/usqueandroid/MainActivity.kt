@@ -1,4 +1,4 @@
-package com.diniboy.usqueandroid
+package com.warp.usque
 
 import android.app.Activity
 import android.content.Intent
