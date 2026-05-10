@@ -53,7 +53,7 @@ jobs:
 
       - name: Build debug APK
         if: ${{ steps.signing.outputs.has_signing != 'true' }}
-        run: gradle --version && gradle assembleDebug --no-daemon
+        run: gradle --version && gradle clean assembleDebug --no-daemon
 
       - name: Build signed release APK
         if: ${{ steps.signing.outputs.has_signing == 'true' }}
@@ -62,7 +62,7 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: gradle --version && gradle assembleRelease --no-daemon
+        run: gradle --version && gradle clean assembleRelease --no-daemon
 
       - name: Prepare APK artifact
         run: |
