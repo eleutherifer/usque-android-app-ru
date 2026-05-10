@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -81,8 +83,14 @@ jobs:
           name: usque-android-apk
           path: dist/*
 
-      - name: Upload APK to GitHub Release
-        if: ${{ github.event_name == 'release' }}
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*
+      - name: Upload APK to latest GitHub Release
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest_tag="$(gh release list --limit 1 --json tagName --jq '.[0].tagName')"
+          if [ -z "$latest_tag" ] || [ "$latest_tag" = "null" ]; then
+            echo "No GitHub Release found; skipping release asset upload."
+            exit 0
+          fi
+          gh release upload "$latest_tag" dist/* --clobber
