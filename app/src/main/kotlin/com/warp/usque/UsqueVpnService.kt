@@ -57,11 +57,51 @@ class UsqueVpnService : VpnService() {
         startForegroundCompat()
         manualStop.set(false)
 
+
+        /*
         val configPath = intent?.getStringExtra("configPath") ?: File(filesDir, "config.json").absolutePath
         val sni = intent?.getStringExtra("sni") ?: "yandex.ru"
         val endpoint = intent?.getStringExtra("endpoint") ?: "162.159.198.2:443"
         val splitMode = intent?.getBooleanExtra("splitMode", false) ?: false
         val allowedApps = intent?.getStringArrayListExtra("allowedApps") ?: arrayListOf()
+        */
+
+        val configPath = intent?.getStringExtra("configPath") ?: File(filesDir, "config.json").absolutePath
+        val splitMode = intent?.getBooleanExtra("splitMode", false) ?: false
+        val allowedApps = intent?.getStringArrayListExtra("allowedApps") ?: arrayListOf()
+
+        // УМНЫЙ ЧИТАТЕЛЬ КОНФИГА: Читаем сохраненные воркером MASQUE данные
+        var sni = "yandex.ru"
+        var endpoint = "162.159.198.2:443"
+        
+        try {
+            val configFile = File(filesDir, "config.json")
+            if (configFile.exists()) {
+                val json = org.json.JSONObject(configFile.readText())
+                sni = json.optString("sni", "yandex.ru")
+                
+                // Извлекаем чистый IP и принудительно подставляем валидный порт
+                val rawEndpoint = json.optString("endpoint", "162.159.198.2")
+                val rawPort = json.optInt("port", 443)
+                
+                // Склеиваем в рабочий формат "IP:PORT"
+                endpoint = "$rawEndpoint:$rawPort"
+            } else {
+                // Если файла нет (резервный случай), берем из интерфейса
+                sni = intent?.getStringExtra("sni") ?: "yandex.ru"
+                endpoint = intent?.getStringExtra("endpoint") ?: "162.159.198.2:443"
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка чтения config.json в сервисе, откат на дефолты: ${e.message}")
+            sni = intent?.getStringExtra("sni") ?: "yandex.ru"
+            endpoint = intent?.getStringExtra("endpoint") ?: "162.159.198.2:443"
+        }
+
+
+
+
+
+
 
         lastConfigPath = configPath
         lastSni = sni

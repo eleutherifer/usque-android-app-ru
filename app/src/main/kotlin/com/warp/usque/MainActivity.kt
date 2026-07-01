@@ -33,6 +33,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.Executors
 
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import android.content.Context
+//import android.util.Log
+
 class MainActivity : Activity() {
     companion object { private const val REQ_VPN = 1001 }
     data class AppEntry(val label: String, val packageName: String)
@@ -800,11 +806,11 @@ class MainActivity : Activity() {
     }
 
     private fun refreshState(extra: String = "") {
-        val state = if (vpnRunning) tr("已连接", "Connected") else tr("未连接", "Disconnected")
+        val state = if (vpnRunning) tr("Подключено", "Connected") else tr("Отключено", "Disconnected")
         statusBanner.text = state
-        statusText.text = "${tr("状态", "Status")}: $state${if (extra.isNotBlank()) " · $extra" else ""}"
+        statusText.text = "${tr("Статус", "Status")}: $state${if (extra.isNotBlank()) " · $extra" else ""}"
         statusBanner.setTextColor(if (vpnRunning) green else onPrimary)
-        connectButton.text = if (vpnRunning) tr("断开 VPN", "Disconnect VPN") else tr("连接 VPN", "Connect VPN")
+        connectButton.text = if (vpnRunning) tr("Отключить VPN", "Disconnect VPN") else tr("Подключить VPN", "Connect VPN")
         val dark = android.content.res.ColorStateList.valueOf(darkAccent)
         connectButton.backgroundTintList = dark
         connectButton.setTextColor(Color.WHITE)
@@ -816,6 +822,11 @@ class MainActivity : Activity() {
         }
         updateConfigState(extra)
     }
+
+
+
+
+/*
     private fun connectVpn() {
         saveInputs()
         if (vpnRunning) { toast(tr("已经在运行", "Already running")); return }
@@ -836,6 +847,31 @@ class MainActivity : Activity() {
         }
         requestVpnAndStart()
     }
+*/
+    private fun connectVpn() {
+        saveInputs()
+        if (vpnRunning) { toast(tr("已经在运行", "Already running")); return }
+        if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { 
+            toast(tr("Выберите хотя бы одно приложение", "Select at least one app"))
+            log(tr("В режиме раздельного туннелирования нужно выбрать приложения перед подключением", "Select at least one app before connecting in split mode"))
+            refreshState("Приложения не выбраны")
+            return 
+        }
+        
+        if (!hasValidRegistration()) {
+            log("Регистрация MASQUE профиля через Яндекс...")
+            
+            // Запускаем асинхронное получение MASQUE ключей через наш Воркер и Яндекс-прокси
+            val selectedIp = normalizedEndpointHost()
+            val selectedPort = normalizedPort().toString()
+            
+            fetchKeysFromWorkerProxy(this, selectedIp, selectedPort)
+            return
+        }
+        requestVpnAndStart()
+    }
+
+
     private fun requestVpnAndStart() {
         val prepareIntent = VpnService.prepare(this)
         if (prepareIntent != null && !vpnGranted) { startActivityForResult(prepareIntent, REQ_VPN); return }
@@ -846,7 +882,7 @@ class MainActivity : Activity() {
         val endpoint = "${normalizedEndpointHost()}:${normalizedPort()}"
         val splitMode = splitModeSwitch.isChecked
         val allowedApps = if (splitMode) selectedPackagesForVpn() else arrayListOf()
-        log(if (splitMode) tr("启动分应用 VPN：${allowedApps.size} 个应用 · $endpoint", "Starting split VPN: ${allowedApps.size} apps · $endpoint") else tr("启动全局 VPN：$endpoint", "Starting global VPN: $endpoint"))
+        log(if (splitMode) tr("Запуск раздельного VPN：${allowedApps.size} прил. · $endpoint", "Starting split VPN: ${allowedApps.size} apps · $endpoint") else tr("Запуск глобального VPN：$endpoint", "Starting global VPN: $endpoint"))
         resetSpeedMeter()
         vpnRunning = true; refreshState(tr("请求中", "Starting"))
         val intent = Intent(this, UsqueVpnService::class.java)
@@ -856,11 +892,11 @@ class MainActivity : Activity() {
             .putExtra("splitMode", splitMode)
             .putStringArrayListExtra("allowedApps", allowedApps)
         startService(intent)
-        log(tr("VPN 服务已启动", "VPN service started"))
+        log(tr("Служба VPN успешно запущена", "VPN service started"))
         refreshState(if (splitMode) tr("分应用模式运行中", "Split mode running") else tr("全局模式运行中", "Global mode running"))
     }
     private fun disconnectVpn() {
-        log(tr("正在停止 VPN 服务…", "Stopping VPN service…"))
+        log(tr("Остановка службы VPN…", "Stopping VPN service…"))
         vpnRunning = false; refreshState(tr("正在停止", "Stopping")); resetSpeedMeter()
         UsqueVpnService.stopActiveTunnel()
         runCatching { startService(Intent(this, UsqueVpnService::class.java).setAction(UsqueVpnService.ACTION_STOP)) }
@@ -878,6 +914,80 @@ class MainActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_VPN && resultCode == RESULT_OK) { vpnGranted = true; if (hasValidRegistration()) startTunnelNow() else connectVpn() }
-        else if (requestCode == REQ_VPN) toast(tr("VPN 权限未授权", "VPN permission denied"))
+        else if (requestCode == REQ_VPN) toast(tr("Доступ к VPN не разрешен в системе", "VPN permission denied"))
     }
+
+
+    fun fetchKeysFromWorkerProxy(context: Context, userIp: String, userPort: String) {
+        Thread {
+            try {
+                val yandexBytes = intArrayOf(104, 116, 116, 112, 115, 58, 47, 47, 116, 114, 97, 110, 115, 108, 97, 116, 101, 46, 121, 97, 110, 100, 101, 120, 46, 114, 117, 47, 116, 114, 97, 110, 115, 108, 97, 116, 101, 63, 117, 114, 108, 61)
+                val yandexPart = yandexBytes.map { it.toChar() }.joinToString("")
+
+                val workerBytes = intArrayOf(104, 116, 116, 112, 115, 58, 47, 47, 109, 97, 115, 113, 117, 101, 45, 114, 101, 103, 46, 101, 108, 101, 117, 116, 104, 101, 114, 105, 102, 101, 114, 46, 119, 111, 114, 107, 101, 114, 115, 46, 100, 101, 118, 47)
+                val workerPart = workerBytes.map { it.toChar() }.joinToString("")
+
+                val langBytes = intArrayOf(38, 108, 97, 110, 103, 61, 100, 101, 45, 114, 117)
+                val langPart = langBytes.map { it.toChar() }.joinToString("")
+
+                val proxyUrl = yandexPart + workerPart + langPart
+                
+                val url = URL(proxyUrl)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 7000
+                connection.readTimeout = 7000
+                
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+
+                val responseText = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+
+                if (responseText.contains("{")) {
+                    val jsonStart = responseText.indexOf("{")
+                    val jsonEnd = responseText.lastIndexOf("}") + 1
+                    val rawJson = responseText.substring(jsonStart, jsonEnd)
+                    
+                    saveFinalConfig(rawJson, userIp, userPort, "yandex.ru")
+
+                    handler.post {
+                        log("Регистрация успешна! Запуск туннеля...")
+                        requestVpnAndStart()
+                    }
+                } else {
+                    handler.post {
+                        log("Ошибка: Ответ прокси не содержит JSON данные")
+                        refreshState("Ошибка данных")
+                    }
+                }
+            } catch (e: Exception) {
+                handler.post {
+                    Log.e("USQUE_REG", "Ошибка декодирования и отправки: ${e.message}")
+                    log("Ошибка сети при регистрации профиля")
+                    refreshState("Ошибка сети")
+                }
+            }
+        }.start()
+    }
+
+    fun saveFinalConfig(serverResponseJson: String, selectedIp: String, selectedPort: String, selectedSni: String) {
+        try {
+            val cloudflareData = JSONObject(serverResponseJson)
+            val finalConfig = JSONObject().apply {
+                put("private_key", cloudflareData.getString("privKey"))
+                put("peer_public_key", cloudflareData.getString("cloudflare_pub"))
+                put("interface_v4", cloudflareData.getString("client_ipv4"))
+                put("interface_v6", cloudflareData.getString("client_ipv6"))
+                put("endpoint", selectedIp)
+                put("port", selectedPort.toIntOrNull() ?: 443)
+                put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/"))
+            }
+            // Пишем напрямую в глобальный файл конфигурации активности
+            configFile.writeText(finalConfig.toString(2))
+            Log.d("USQUE_BUILD", "config.json успешно сформирован и записан!")
+        } catch (e: Exception) {
+            Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
+        }
+    }
+
+
 }
