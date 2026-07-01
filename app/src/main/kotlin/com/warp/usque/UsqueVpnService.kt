@@ -75,7 +75,7 @@ class UsqueVpnService : VpnService() {
         var endpoint = "162.159.198.2:443"
         
         try {
-//            val configFile = File(filesDir, "config.json")
+            val configFile = File(filesDir, "config.json")
             if (configFile.exists()) {
                 val json = org.json.JSONObject(configFile.readText())
                 sni = json.optString("sni", "yandex.ru")
