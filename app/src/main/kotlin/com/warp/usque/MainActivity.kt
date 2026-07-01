@@ -947,6 +947,7 @@ class MainActivity : Activity() {
                     val jsonEnd = responseText.lastIndexOf("}") + 1
                     val rawJson = responseText.substring(jsonStart, jsonEnd)
                     
+                    // Вызываем сохранение без передачи контекста (он не нужен)
                     saveFinalConfig(rawJson, userIp, userPort, "yandex.ru")
 
                     handler.post {
@@ -955,13 +956,13 @@ class MainActivity : Activity() {
                     }
                 } else {
                     handler.post {
-                        log("Ошибка: Ответ прокси не содержит JSON данные")
+                        log("Ошибка: Ответ Яндекса не содержит JSON")
                         refreshState("Ошибка данных")
                     }
                 }
             } catch (e: Exception) {
                 handler.post {
-                    Log.e("USQUE_REG", "Ошибка декодирования и отправки: ${e.message}")
+                    Log.e("USQUE_REG", "Ошибка автоматической регистрации: ${e.message}")
                     log("Ошибка сети при регистрации профиля")
                     refreshState("Ошибка сети")
                 }
@@ -981,9 +982,9 @@ class MainActivity : Activity() {
                 put("port", selectedPort.toIntOrNull() ?: 443)
                 put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/"))
             }
-            // Пишем напрямую в глобальный файл конфигурации активности
+            // Пишем напрямую в системный configFile активности без переопределений
             configFile.writeText(finalConfig.toString(2))
-            Log.d("USQUE_BUILD", "config.json успешно сформирован и записан!")
+            Log.d("USQUE_BUILD", "config.json для MASQUE успешно записан!")
         } catch (e: Exception) {
             Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
         }
