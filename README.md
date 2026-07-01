@@ -5,14 +5,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/garthnet/usque-android-app/releases">
-    <img src="https://img.shields.io/github/v/release/garthnet/usque-android-app?style=flat-square" alt="Release">
+  <a href="https://github.com/eleutherifer/usque-ru-android-app/releases">
+    <img src="https://img.shields.io/github/v/release/eleutherifer/usque-ru-android-app?style=flat-square" alt="Release">
   </a>
-  <a href="https://github.com/garthnet/usque-android-app">
+  <a href="https://github.com/eleutherifer/usque-ru-android-app">
     <img src="https://img.shields.io/badge/platform-android-blue?style=flat-square" alt="Platform">
   </a>
-  <a href="https://github.com/garthnet/usque-android-app/actions/workflows/android.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/garthnet/usque-android-app/android.yml?branch=main&style=flat-square" alt="Android APK">
+  <a href="https://github.com/eleutherifer/usque-ru-android-app/actions/workflows/android.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/eleutherifer/usque-ru-android-app/android.yml?branch=main&style=flat-square" alt="Android APK">
   </a>
 </p>
 
@@ -32,12 +32,12 @@
 
 ## 📲 Download
 
-Download the latest APK from the [Releases](https://github.com/garthnet/usque-android-app/releases) page.
+Download the latest APK from the [Releases](https://github.com/eleutherifer/usque-ru-android-app/releases) page.
 
 Direct download:
 
 ```text
-https://github.com/garthnet/usque-android-app/releases/download/v1.0.2/usque-android-app-release-v1.0.2.apk
+https://github.com/eleutherifer/usque-ru-android-app/releases/download/v1.0.2/usque-ru-android-app-release-v1.0.2.apk
 ```
 
 > The GitHub Actions workflow reads `versionName` from `app/build.gradle` and publishes the APK to the matching versioned Release, for example `1.0.2` → `v1.0.2`.
@@ -121,7 +121,7 @@ docs/github-actions-signing.md
 ## 🏗️ Architecture
 
 ```text
-usque-android-app/
+usque-ru-android-app/
 ├── app/
 │   ├── src/main/
 │   │   ├── kotlin/com/warp/usque/      # Kotlin UI and VPN service
