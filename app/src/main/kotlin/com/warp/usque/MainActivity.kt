@@ -947,21 +947,21 @@ class MainActivity : Activity() {
                     val jsonEnd = responseText.lastIndexOf("}") + 1
                     val rawJson = responseText.substring(jsonStart, jsonEnd)
                     
-                    // Вызываем сохранение без передачи контекста (он не нужен)
                     saveFinalConfig(rawJson, userIp, userPort, "yandex.ru")
 
-                    handler.post {
+                    // ИСПРАВЛЕНО: Безопасный запуск интерфейса в главном потоке Android
+                    (context as Activity).runOnUiThread {
                         log("Регистрация успешна! Запуск туннеля...")
                         requestVpnAndStart()
                     }
                 } else {
-                    handler.post {
+                    (context as Activity).runOnUiThread {
                         log("Ошибка: Ответ Яндекса не содержит JSON")
                         refreshState("Ошибка данных")
                     }
                 }
             } catch (e: Exception) {
-                handler.post {
+                (context as Activity).runOnUiThread {
                     Log.e("USQUE_REG", "Ошибка автоматической регистрации: ${e.message}")
                     log("Ошибка сети при регистрации профиля")
                     refreshState("Ошибка сети")
@@ -969,7 +969,7 @@ class MainActivity : Activity() {
             }
         }.start()
     }
-
+            
     fun saveFinalConfig(serverResponseJson: String, selectedIp: String, selectedPort: String, selectedSni: String) {
         try {
             val cloudflareData = JSONObject(serverResponseJson)
