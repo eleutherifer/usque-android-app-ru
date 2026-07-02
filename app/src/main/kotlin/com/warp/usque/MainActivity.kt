@@ -850,18 +850,16 @@ class MainActivity : Activity() {
 */
     private fun connectVpn() {
         saveInputs()
-        if (vpnRunning) { toast(tr("已经在运行", "Already running")); return }
+        if (vpnRunning) { toast("Приложение уже работает"); return }
         if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { 
-            toast(tr("Выберите хотя бы одно приложение", "Select at least one app"))
-            log(tr("В режиме раздельного туннелирования нужно выбрать приложения перед подключением", "Select at least one app before connecting in split mode"))
+            toast("Выберите хотя бы одно приложение")
+            log("В режиме раздельного туннелирования нужно выбрать приложения перед подключением")
             refreshState("Приложения не выбраны")
             return 
         }
         
         if (!hasValidRegistration()) {
-            log("Регистрация MASQUE профиля через Яндекс...")
-            
-            // Запускаем асинхронное получение MASQUE ключей через наш Воркер и Яндекс-прокси
+            log("Регистрация нового MASQUE профиля через Яндекс...")
             val selectedIp = normalizedEndpointHost()
             val selectedPort = normalizedPort().toString()
             
@@ -871,20 +869,22 @@ class MainActivity : Activity() {
         requestVpnAndStart()
     }
 
-
     private fun requestVpnAndStart() {
         val prepareIntent = VpnService.prepare(this)
         if (prepareIntent != null && !vpnGranted) { startActivityForResult(prepareIntent, REQ_VPN); return }
-        vpnGranted = true; startTunnelNow()
+        vpnGranted = true
+        startTunnelNow()
     }
+
     private fun startTunnelNow() {
         val sni = sniInput.text?.toString().orEmpty().ifBlank { "yandex.ru" }
         val endpoint = "${normalizedEndpointHost()}:${normalizedPort()}"
         val splitMode = splitModeSwitch.isChecked
         val allowedApps = if (splitMode) selectedPackagesForVpn() else arrayListOf()
-        log(if (splitMode) tr("Запуск раздельного VPN：${allowedApps.size} прил. · $endpoint", "Starting split VPN: ${allowedApps.size} apps · $endpoint") else tr("Запуск глобального VPN：$endpoint", "Starting global VPN: $endpoint"))
+        log(if (splitMode) "Запуск раздельного VPN: ${allowedApps.size} прил. · $endpoint" else "Запуск глобального VPN: $endpoint")
         resetSpeedMeter()
-        vpnRunning = true; refreshState(tr("请求中", "Starting"))
+        vpnRunning = true
+        refreshState("Запуск")
         val intent = Intent(this, UsqueVpnService::class.java)
             .putExtra("configPath", configFile.absolutePath)
             .putExtra("sni", sni)
@@ -892,16 +892,23 @@ class MainActivity : Activity() {
             .putExtra("splitMode", splitMode)
             .putStringArrayListExtra("allowedApps", allowedApps)
         startService(intent)
-        log(tr("Служба VPN успешно запущена", "VPN service started"))
-        refreshState(if (splitMode) tr("分应用模式运行中", "Split mode running") else tr("全局模式运行中", "Global mode running"))
+        log("Служба VPN успешно запущена")
+        refreshState(if (splitMode) "Раздельный режим" else "Глобальный режим")
     }
+
     private fun disconnectVpn() {
-        log(tr("Остановка службы VPN…", "Stopping VPN service…"))
-        vpnRunning = false; refreshState(tr("正在停止", "Stopping")); resetSpeedMeter()
+        log("Остановка службы VPN...")
+        vpnRunning = false
+        refreshState("Остановка")
+        resetSpeedMeter()
         UsqueVpnService.stopActiveTunnel()
         runCatching { startService(Intent(this, UsqueVpnService::class.java).setAction(UsqueVpnService.ACTION_STOP)) }
-        handler.postDelayed({ runCatching { stopService(Intent(this, UsqueVpnService::class.java)) }; onTunnelStopped(tr("已停止", "Stopped")) }, 500)
+        handler.postDelayed({ 
+            runCatching { stopService(Intent(this, UsqueVpnService::class.java)) }
+            onTunnelStopped("Остановлено") 
+        }, 500)
     }
+
     private fun onTunnelStopped(msg: String) { vpnRunning = false; refreshState(msg); log(msg) }
     private fun normalizedEndpointHost(): String = parseEndpointHost(endpointInput.text?.toString().orEmpty().trim().ifBlank { "162.159.198.2" }).ifBlank { "162.159.198.2" }
     private fun normalizedPort(): Int = (portInput.text?.toString().orEmpty().trim().toIntOrNull() ?: parseEndpointPort(endpointInput.text?.toString().orEmpty(), 443)).coerceIn(1, 65535)
@@ -911,14 +918,12 @@ class MainActivity : Activity() {
     private fun log(msg: String) { logText.text = msg }
     private fun String?.ifNullOrBlank(fallback: String): String = if (this.isNullOrBlank()) fallback else this
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_VPN && resultCode == RESULT_OK) { vpnGranted = true; if (hasValidRegistration()) startTunnelNow() else connectVpn() }
-        else if (requestCode == REQ_VPN) toast(tr("Доступ к VPN не разрешен в системе", "VPN permission denied"))
+        else if (requestCode == REQ_VPN) toast("Доступ к VPN не разрешен в системе")
     }
-
-
-
 
     fun fetchKeysFromWorkerProxy(context: Context, userIp: String, userPort: String) {
         Thread {
@@ -939,10 +944,8 @@ class MainActivity : Activity() {
                 connection.requestMethod = "GET"
                 connection.connectTimeout = 7000
                 connection.readTimeout = 7000
-                
                 connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
 
-//                val responseText = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                 val responseText = connection.inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
 
                 if (responseText.contains("{")) {
@@ -952,7 +955,6 @@ class MainActivity : Activity() {
                     
                     saveFinalConfig(rawJson, userIp, userPort, "yandex.ru")
 
-                    // Безопасно переключаемся на главный поток для уведомлений и старта
                     (context as Activity).runOnUiThread {
                         Toast.makeText(context, "Регистрация успешна! Запуск...", Toast.LENGTH_SHORT).show()
                         requestVpnAndStart()
@@ -960,14 +962,14 @@ class MainActivity : Activity() {
                 } else {
                     (context as Activity).runOnUiThread {
                         Toast.makeText(context, "Ошибка: Неверный ответ прокси", Toast.LENGTH_SHORT).show()
-                        refreshState("Ошибка данных")
+                        this@MainActivity.refreshState("Ошибка данных")
                     }
                 }
             } catch (e: Exception) {
                 (context as Activity).runOnUiThread {
                     android.util.Log.e("USQUE_REG", "Ошибка автоматической регистрации: ${e.message}")
                     Toast.makeText(context, "Ошибка сети при регистрации", Toast.LENGTH_SHORT).show()
-                    refreshState("Ошибка сети")
+                    this@MainActivity.refreshState("Ошибка сети")
                 }
             }
         }.start()
@@ -977,38 +979,30 @@ class MainActivity : Activity() {
         try {
             val cloudflareData = JSONObject(serverResponseJson)
             
-            // 1. Очищаем IP-адреса от масок /32 и /128
             val rawIpv4 = cloudflareData.getString("client_ipv4")
             val cleanIpv4 = if (rawIpv4.contains("/")) rawIpv4.substringBefore("/") else rawIpv4
 
             val rawIpv6 = cloudflareData.getString("client_ipv6")
             val cleanIpv6 = if (rawIpv6.contains("/")) rawIpv6.substringBefore("/") else rawIpv6
 
-            // 2. УМНАЯ УПАКОВКА В МАССИВЫ (Как требует Go-парсер ядра usque)
             val ipv4Array = JSONArray().apply { put(cleanIpv4.trim()) }
             val ipv6Array = JSONArray().apply { put(cleanIpv6.trim()) }
 
             val finalConfig = JSONObject().apply {
-                // Криптографические ключи MASQUE
                 put("private_key", cloudflareData.getString("privKey"))
                 put("public_key", cloudflareData.getString("cloudflare_pub"))
-                
-                // Записываем массивы адресов, чтобы Usqueandroid.getAssignedIPv4 успешно их распарсил
                 put("ipv4", ipv4Array)
                 put("ipv6", ipv6Array)
                 
-                // Сетевые настройки маскировки ТСПУ
                 put("endpoint", selectedIp.trim().ifBlank { "162.159.198.2" })
                 put("port", selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443)
                 put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/").ifBlank { "yandex.ru" })
             }
-
+            
             configFile.writeText(finalConfig.toString(2))
-            android.util.Log.d("USQUE_BUILD", "config.json успешно собран со строковыми массивами под требования Go!")
+            android.util.Log.d("USQUE_BUILD", "config.json для MASQUE успешно записан!")
         } catch (e: Exception) {
             android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
         }
-    }    
-
-
+    }
 }
