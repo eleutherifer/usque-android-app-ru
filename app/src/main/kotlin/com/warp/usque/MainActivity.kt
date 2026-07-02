@@ -368,6 +368,18 @@ class MainActivity : Activity() {
         saveNewProfileBtn = secondaryButton(tr("Сохранить как новый", "Save as New"))
         overwriteProfileBtn = secondaryButton(tr("Перезаписать текущий", "Overwrite Current"))
         deleteProfileBtn = secondaryButton(tr("Удалить выбранный профиль", "Delete Profile"))
+
+        // 🛠️ ИСПРАВЛЕНИЕ: Настраиваем отображение текста для каждой кнопки
+        val profileButtons = listOf(saveNewProfileBtn, overwriteProfileBtn, deleteProfileBtn)
+        profileButtons.forEach { btn ->
+            btn.isSingleLine = false         // Разрешаем перенос на новую строку
+            btn.maxLines = 2                 // Ограничиваем максимум двумя строками
+            btn.isAllCaps = false            // Отключаем принудительные заглавные буквы (если MaterialButton делает их БОЛЬШИМИ)
+            
+            // Уменьшаем боковые отступы до 4dp, чтобы тексту было просторнее
+            btn.setPadding(dp(4), btn.paddingTop, dp(4), btn.paddingBottom)
+        }
+
         exportConfigBtn = secondaryButton(tr("Экспорт всего конфига", "Export entire config"))
         importConfigBtn = secondaryButton(tr("Импорт из буфера", "Import from buffer"))
         profileBox.addView(TextView(this).apply { text = tr("Профили настроек", "Profiles"); textSize = 18f; setTextColor(textColor); setTypeface(null, Typeface.BOLD) })
@@ -493,6 +505,14 @@ class MainActivity : Activity() {
         backgroundTintList = android.content.res.ColorStateList.valueOf(primary)
         strokeWidth = 0
         elevation = dp(1).toFloat()
+
+        // 🛠️ ИСПРАВЛЕНИЕ: Разрешаем многострочность
+        isSingleLine = false
+        maxLines = 2
+        ellipsize = null
+
+        // 🛠️ ИСПРАВЛЕНИЕ: Уменьшаем внутренние боковые отступы до 4dp (по аналогии с вкладками)
+        setPadding(dp(4), paddingTop, dp(4), paddingBottom)
     }
     private fun sectionTitle(s: String) = TextView(this).apply {
         text = s
@@ -1019,6 +1039,7 @@ class MainActivity : Activity() {
         }.start()
     }
 
+/*
     fun saveFinalConfig(serverResponseJson: String, selectedIp: String, selectedPort: String, selectedSni: String) {
         try {
             val cloudflareData = JSONObject(serverResponseJson)
@@ -1049,9 +1070,51 @@ class MainActivity : Activity() {
             android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
         }
     }
+*/
+    fun saveFinalConfig(serverResponseJson: String, selectedIp: String, selectedPort: String) {
+        try {
+            val cloudflareData = JSONObject(serverResponseJson)
+            
+            // Очищаем IP от масок подсетей (убираем /32 или /128, если они есть)
+            val rawIpv4 = cloudflareData.optString("client_ipv4", "")
+            val cleanIpv4 = if (rawIpv4.contains("/")) rawIpv4.substringBefore("/") else rawIpv4
 
-    // 🟢 ЭКСПОРТ: Собирает все файлы настроек в одну строку и копирует в буфер
-    fun exportAllConfigToClipboard() {
+            val rawIpv6 = cloudflareData.optString("client_ipv6", "")
+            val cleanIpv6 = if (rawIpv6.contains("/")) rawIpv6.substringBefore("/") else rawIpv6
+
+            // Формируем эндпоинты с портами (Go-код ожидает их в таком формате внутри endpoint_v4/v6)
+            val port = selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443
+            val ipV4 = selectedIp.trim().ifBlank { "162.159.198.2" }
+            val endpointV4WithPort = "$ipV4:$port"
+            
+            // Для IPv6 оборачиваем адрес в квадратные скобки, если это необходимо
+            val ipV6 = "2606:4700:103::2" // Значение по умолчанию или из UI
+            val endpointV6WithPort = if (ipV6.contains(":")) "[$ipV6]:$port" else "$ipV6:$port"
+
+            val finalConfig = JSONObject().apply {
+                // Соответствие маппингу json-тегов из Go-структуры:
+                put("private_key", cloudflareData.optString("privKey", ""))
+                put("endpoint_v4", endpointV4WithPort)
+                put("endpoint_v6", endpointV6WithPort)
+                put("endpoint_h2_v4", endpointV4WithPort) // Дублируем для HTTP/2 режима, если нужно
+                put("endpoint_h2_v6", endpointV6WithPort)
+                put("endpoint_pub_key", cloudflareData.optString("cloudflare_pub", ""))
+                put("id", cloudflareData.optString("id", ""))
+                put("access_token", cloudflareData.optString("access_token", ""))
+                put("ipv4", cleanIpv4.trim()) // Передаем как СТРОКУ, а не JSONArray
+                put("ipv6", cleanIpv6.trim()) // Передаем как СТРОКУ, а не JSONArray
+            }
+            
+            configFile.writeText(finalConfig.toString(2))
+            android.util.Log.d("USQUE_BUILD", "config.json для usque-go успешно записан!")
+        } catch (e: Exception) {
+            android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
+        }
+    }    
+
+//    // 🟢 ЭКСПОРТ: Собирает все файлы настроек в одну строку и копирует в буфер
+    // 🟢 ЭКСПОРТ: Собирает все файлы настроек в чистый JSON и копирует в буфер
+        fun exportAllConfigToClipboard() {
         try {
             val exportData = JSONObject()
 
@@ -1067,13 +1130,19 @@ class MainActivity : Activity() {
                 exportData.put("profiles", JSONObject(profilesFile.readText()))
             }
 
+/*
             // 3. Переводим в Base64, чтобы ТСПУ или мессенджеры не ломали структуру кавычек
             val rawBytes = exportData.toString().toByteArray(java.nio.charset.StandardCharsets.UTF_8)
             val base64String = android.util.Base64.encodeToString(rawBytes, android.util.Base64.NO_WRAP)
+*/
+            // 3. Переводим в обычную JSON-строку с красивыми отступами (2 пробела)
+            // Если нужен компактный вид в одну строку, используйте просто exportData.toString()
+            val jsonString = exportData.toString(2)
 
             // 4. Копируем в буфер обмена Android
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("Usque Config", base64String)
+//            val clip = ClipData.newPlainText("Usque Config", base64String)
+            val clip = ClipData.newPlainText("Usque Config", jsonString)
             clipboard.setPrimaryClip(clip)
 
             toast("Конфигурация скопирована в буфер обмена!")
@@ -1082,7 +1151,8 @@ class MainActivity : Activity() {
         }
     }
 
-    // 🟢 ИМПОРТ: Читает строку из буфера, распаковывает и восстанавливает файлы
+//    // 🟢 ИМПОРТ: Читает строку из буфера, распаковывает и восстанавливает файлы
+    // 🟢 ИМПОРТ: Читает чистый JSON из буфера и восстанавливает файлы настройки
     fun importAllConfigFromClipboard() {
         try {
             if (vpnRunning) {
@@ -1098,12 +1168,17 @@ class MainActivity : Activity() {
                 return
             }
 
-            val base64String = clipData.getItemAt(0).text.toString().trim()
+//            val base64String = clipData.getItemAt(0).text.toString().trim()
+            val rawJsonString = clipData.getItemAt(0).text.toString().trim()
             
+/*
             // 2. Декодируем Base64 обратно в JSON
             val decodedBytes = android.util.Base64.decode(base64String, android.util.Base64.DEFAULT)
             val decodedString = String(decodedBytes, java.nio.charset.StandardCharsets.UTF_8)
             val importData = JSONObject(decodedString)
+*/
+            // 2. Сразу парсим строку как JSON (без декодирования Base64)
+            val importData = JSONObject(rawJsonString)
 
             // 3. Восстанавливаем основной config.json
             if (importData.has("config")) {
