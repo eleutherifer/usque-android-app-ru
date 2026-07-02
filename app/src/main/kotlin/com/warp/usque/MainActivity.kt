@@ -151,7 +151,7 @@ class MainActivity : Activity() {
         return super.dispatchTouchEvent(ev)
     }
 
-    private fun tr(zh: String, en: String): String = if (useEnglish) en else zh
+    private fun tr(ru: String, en: String): String = if (useEnglish) en else ru
     private fun setLanguage(en: Boolean) {
         useEnglish = en
         prefs.edit().putBoolean("useEnglish", useEnglish).apply()
@@ -193,9 +193,9 @@ class MainActivity : Activity() {
             (child.parent as? ViewGroup)?.removeView(child)
             addView(child)
         }
-        val overviewTab = tabButton(tr("总览", "Overview"))
-        val configTab = tabButton(tr("配置", "Config"))
-        val appsTab = tabButton(tr("应用", "Apps"))
+        val overviewTab = tabButton(tr("Главная", "Overview"))
+        val configTab = tabButton(tr("Настройки", "Config"))
+        val appsTab = tabButton(tr("Приложения", "Apps"))
         val tabsList = listOf(overviewTab, configTab, appsTab)
         tabsList.forEachIndexed { index, b ->
             tabs.addView(b, LinearLayout.LayoutParams(0, dp(36), 1f).apply { if (index < 2) rightMargin = dp(8) })
@@ -204,7 +204,7 @@ class MainActivity : Activity() {
         val homePage = buildHomePage()
         val configPage = buildConfigPage()
         val appsPage = buildAppsPage()
-        val titles = listOf("Usque RU", tr("连接配置", "Connection Config"), tr("选择应用", "Select Apps"))
+        val titles = listOf("Usque RU", tr("Настройки подключения", "Connection Config"), tr("Выбор приложений", "Select Apps"))
         val pages = listOf(homePage, configPage, appsPage)
         fun showIndex(index: Int) {
             val safe = index.coerceIn(0, pages.lastIndex)
@@ -227,7 +227,7 @@ class MainActivity : Activity() {
             val defaultEndpoint = Usqueandroid.getDefaultEndpoint(configFile.absolutePath)
             endpointInput.setText(parseEndpointHost(defaultEndpoint))
             portInput.setText(parseEndpointPort(defaultEndpoint, 443).toString())
-            refreshState(tr("已读取默认 endpoint", "Default endpoint loaded"))
+            refreshState(tr("Загружен endpoint по умолчанию", "Default endpoint loaded"))
         }
         saveNewProfileBtn.setOnClickListener { saveAsNewProfile() }
         overwriteProfileBtn.setOnClickListener { overwriteSelectedProfile() }
@@ -258,14 +258,14 @@ class MainActivity : Activity() {
             setTypeface(null, Typeface.BOLD)
         }
         statusBanner = TextView(this).apply {
-            text = tr("未连接", "Disconnected")
+            text = tr("Отключено", "Disconnected")
             textSize = 28f
             setTextColor(onPrimary)
             setTypeface(null, Typeface.BOLD)
             setPadding(0, dp(6), 0, 0)
         }
         statusText = TextView(this).apply {
-            text = tr("状态: 未连接", "Status: Disconnected")
+            text = tr("Статус: Отключено", "Status: Disconnected")
             textSize = 14f
             setTextColor(subText)
             setPadding(0, dp(2), 0, dp(2))
@@ -282,7 +282,7 @@ class MainActivity : Activity() {
             setPadding(dp(10), 0, dp(10), 0)
         }
         connectButton = MaterialButton(this).apply {
-            text = tr("连接 VPN", "Connect VPN")
+            text = tr("Подключить VPN", "Connect VPN")
             textSize = 15f
             gravity = Gravity.CENTER
             setSingleLine(false)
@@ -304,13 +304,13 @@ class MainActivity : Activity() {
         hero.addView(heroBox)
         content.addView(hero, LinearLayout.LayoutParams(-1, -2))
 
-        content.addView(sectionTitle(tr("代理模式", "Proxy Mode")))
+        content.addView(sectionTitle(tr("Режим проксирования", "Proxy Mode")))
         val modeCard = card()
         val modeBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(10), dp(16), dp(10)) }
-        modeValue = TextView(this).apply { text = tr("全局模式", "Global Mode"); textSize = 18f; setTextColor(textColor); setTypeface(null, Typeface.BOLD) }
-        modeHint = TextView(this).apply { text = tr("所有应用走 VPN。切到分应用后，仅“应用”页勾选的应用走 VPN。", "All apps use VPN. In split mode, only selected apps use VPN."); textSize = 14f; setTextColor(subText); setPadding(0, dp(4), 0, dp(6)) }
+        modeValue = TextView(this).apply { text = tr("Глобальный режим", "Global Mode"); textSize = 18f; setTextColor(textColor); setTypeface(null, Typeface.BOLD) }
+        modeHint = TextView(this).apply { text = tr("Все приложения идут через VPN. При переключении в раздельный режим через VPN будут идти только выбранные приложения.", "All apps use VPN. In split mode, only selected apps use VPN."); textSize = 14f; setTextColor(subText); setPadding(0, dp(4), 0, dp(6)) }
         splitModeSwitch = MaterialSwitch(this).apply {
-            text = tr("启用分应用代理", "Enable split tunneling")
+            text = tr("Включить раздельное туннелирование", "Enable split tunneling")
             textSize = 16f
             setTextColor(textColor)
             setPadding(0, dp(2), 0, 0)
@@ -328,12 +328,12 @@ class MainActivity : Activity() {
         ipv6Text = TextView(this)
         configStateText = TextView(this)
         logText = TextView(this).apply {
-            text = tr("点连接即可。首次连接会自动注册并启动 VPN。", "Tap Connect. First launch will register automatically and start VPN.")
+            text = tr("Нажмите «Подключить». При первом запуске профиль зарегистрируется автоматически, и VPN запустится.", "Tap Connect. First launch will register automatically and start VPN.")
         }
 
         val languageCard = card()
         val languageBox = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(16), dp(12), dp(16), dp(12)) }
-        languageZhButton = secondaryButton("中文").apply { setOnClickListener { setLanguage(false) } }
+        languageZhButton = secondaryButton("Русский").apply { setOnClickListener { setLanguage(false) } }
         languageEnButton = secondaryButton("English").apply { setOnClickListener { setLanguage(true) } }
         languageBox.addView(languageZhButton, LinearLayout.LayoutParams(0, dp(50), 1f).apply { rightMargin = dp(10) })
         languageBox.addView(languageEnButton, LinearLayout.LayoutParams(0, dp(50), 1f))
@@ -344,19 +344,19 @@ class MainActivity : Activity() {
 
     private fun buildConfigPage(): View {
         val content = pageContent()
-        content.addView(sectionHeader(tr("连接配置", "Connection Config"), tr("多组方案一键切换。", "Switch between saved profiles quickly.")))
+        content.addView(sectionHeader(tr("Настройки подключения", "Connection Config"), tr("Быстрое переключение между сохранёнными профилями.", "Switch between saved profiles quickly.")))
 
         val profileCard = card()
         val profileBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(10)) }
         profileSpinner = Spinner(this).apply { background = round(surface2, dp(16), outline); setPadding(dp(10), 0, dp(10), 0) }
-        profileNameInput = input(tr("配置名称", "Profile Name"), tr("例如：Yandex 443 / Cloudflare 8443", "e.g. Yandex 443 / Cloudflare 8443"))
-        saveNewProfileBtn = secondaryButton(tr("保存为新方案", "Save as New"))
-        overwriteProfileBtn = secondaryButton(tr("覆盖当前方案", "Overwrite Current"))
-        deleteProfileBtn = secondaryButton(tr("删除选中方案", "Delete Profile"))
-        profileBox.addView(TextView(this).apply { text = tr("配置方案", "Profiles"); textSize = 18f; setTextColor(textColor); setTypeface(null, Typeface.BOLD) })
-        profileBox.addView(TextView(this).apply { text = tr("保存当前 SNI / Endpoint / Port，后面可以直接切换。", "Save current SNI / Endpoint / Port for quick switching."); textSize = 12f; setTextColor(subText); setPadding(0, dp(2), 0, dp(6)) })
+        profileNameInput = input(tr("Название профиля", "Profile Name"), tr("Например：Yandex 443 / Cloudflare 8443", "e.g. Yandex 443 / Cloudflare 8443"))
+        saveNewProfileBtn = secondaryButton(tr("Сохранить как новый", "Save as New"))
+        overwriteProfileBtn = secondaryButton(tr("Перезаписать текущий", "Overwrite Current"))
+        deleteProfileBtn = secondaryButton(tr("Удалить выбранный профиль", "Delete Profile"))
+        profileBox.addView(TextView(this).apply { text = tr("Профили настроек", "Profiles"); textSize = 18f; setTextColor(textColor); setTypeface(null, Typeface.BOLD) })
+        profileBox.addView(TextView(this).apply { text = tr("Сохранить текущие SNI / Endpoint / Port для быстрого переключения.", "Save current SNI / Endpoint / Port for quick switching."); textSize = 12f; setTextColor(subText); setPadding(0, dp(2), 0, dp(6)) })
         profileBox.addView(profileSpinner, LinearLayout.LayoutParams(-1, dp(42)))
-        profileBox.addView(inputWrap(tr("配置名称", "Profile Name"), profileNameInput), LinearLayout.LayoutParams(-1, dp(70)).apply { topMargin = dp(5) })
+        profileBox.addView(inputWrap(tr("Название профиля", "Profile Name"), profileNameInput), LinearLayout.LayoutParams(-1, dp(70)).apply { topMargin = dp(5) })
         val profileActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         profileActions.addView(overwriteProfileBtn, LinearLayout.LayoutParams(0, dp(42), 1f).apply { rightMargin = dp(8) })
         profileActions.addView(saveNewProfileBtn, LinearLayout.LayoutParams(0, dp(42), 1f))
@@ -365,13 +365,13 @@ class MainActivity : Activity() {
         profileCard.addView(profileBox)
         content.addView(profileCard)
 
-        content.addView(sectionTitle(tr("当前连接参数", "Current Connection")))
+        content.addView(sectionTitle(tr("Текущие параметры подключения", "Current Connection")))
         val config = card()
         val configBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(8)) }
-        sniInput = input("SNI", "yandex.ru")
+        sniInput = input("SNI", "apteka.ru")
         endpointInput = input("Endpoint IP", "162.159.198.2")
         portInput = input("Connect Port", "443")
-        defaultBtn = secondaryButton(tr("读取默认 endpoint", "Load Default Endpoint"))
+        defaultBtn = secondaryButton(tr("Загрузить endpoint по умолчанию", "Load Default Endpoint"))
         configBox.addView(compactInputWrap("SNI", sniInput))
         configBox.addView(compactInputWrap("Endpoint IP", endpointInput))
         configBox.addView(compactInputWrap("Connect Port", portInput))
@@ -383,17 +383,17 @@ class MainActivity : Activity() {
 
     private fun buildAppsPage(): View {
         val content = pageContent()
-        content.addView(sectionHeader(tr("选择应用", "Select Apps"), tr("这里只负责选择应用；是否启用分应用代理在“总览”页切换。", "Only choose apps here. Enable split tunneling on Overview.")))
+        content.addView(sectionHeader(tr("Выбор приложений", "Select Apps"), tr("Здесь выбираются только приложения. Включение раздельного туннелирования выполняется на «Главной» странице.", "Only choose apps here. Enable split tunneling on Overview.")))
         appSection = card()
         val appBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(10)) }
-        appSearchInput = input(tr("搜索应用", "Search Apps"), tr("应用名或包名", "App name or package"))
-        appCountText = infoLine(tr("已选择 0 个应用", "0 apps selected"))
+        appSearchInput = input(tr("Поиск приложений", "Search Apps"), tr("Название или имя пакета", "App name or package"))
+        appCountText = infoLine(tr("Выбрано приложений: 0", "0 apps selected"))
         appListContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        appBox.addView(inputWrap(tr("搜索", "Search"), appSearchInput))
+        appBox.addView(inputWrap(tr("Поиск", "Search"), appSearchInput))
         appBox.addView(appCountText)
         val appActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        selectAllAppsBtn = secondaryButton(tr("全选", "Select All")).apply { setOnClickListener { selectAllVisibleApps() } }
-        clearAllAppsBtn = secondaryButton(tr("全不选", "Select None")).apply { setOnClickListener { clearAllVisibleApps() } }
+        selectAllAppsBtn = secondaryButton(tr("Выбрать все", "Select All")).apply { setOnClickListener { selectAllVisibleApps() } }
+        clearAllAppsBtn = secondaryButton(tr("Снять выделение", "Select None")).apply { setOnClickListener { clearAllVisibleApps() } }
         appActions.addView(selectAllAppsBtn, LinearLayout.LayoutParams(0, dp(40), 1f).apply { rightMargin = dp(8) })
         appActions.addView(clearAllAppsBtn, LinearLayout.LayoutParams(0, dp(40), 1f))
         appBox.addView(appActions, LinearLayout.LayoutParams(-1, dp(44)).apply { topMargin = dp(4) })
@@ -534,7 +534,7 @@ class MainActivity : Activity() {
     }
     private fun markDirty() { configDirty = true; updateConfigState() }
     private fun updateConfigState(extra: String = "") {
-        val base = if (configDirty) tr("配置: 未保存，连接时会自动保存", "Config: unsaved, will auto-save on connect") else tr("配置: 已保存", "Config: saved")
+        val base = if (configDirty) tr("Конфиг: не сохранен, при подключении сохранится автоматически", "Config: unsaved, will auto-save on connect") else tr("Конфиг: сохранен", "Config: saved")
         configStateText.text = if (extra.isBlank()) base else "$base · $extra"
     }
     private fun saveInputs() {
@@ -555,12 +555,12 @@ class MainActivity : Activity() {
             val arr = JSONArray(raw)
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
-                profiles[o.getString("name")] = Triple(o.optString("sni", "yandex.ru"), o.optString("endpoint", "162.159.198.2"), o.optInt("port", 443))
+                profiles[o.getString("name")] = Triple(o.optString("sni", "apteka.ru"), o.optString("endpoint", "162.159.198.2"), o.optInt("port", 443))
             }
         }
         if (profiles.isEmpty()) {
-            profiles["默认 443"] = Triple("yandex.ru", "162.159.198.2", 443)
-            profiles["备用 8443"] = Triple("yandex.ru", "162.159.198.2", 8443)
+            profiles["По умолчанию 443"] = Triple("apteka.ru", "162.159.198.2", 443)
+            profiles["Альтернативный 8443"] = Triple("apteka.ru", "162.159.198.2", 8443)
             persistProfiles()
         }
         refreshProfileSpinner()
@@ -614,9 +614,9 @@ class MainActivity : Activity() {
         val name = currentProfileName().takeIf { it.isNotBlank() } ?: profiles.keys.firstOrNull().orEmpty()
         val p = profiles[name]
         currentProfileText.text = if (p != null) {
-            tr("当前配置：$name · SNI ${p.first} · ${p.second}:${p.third}", "Current: $name · SNI ${p.first} · ${p.second}:${p.third}")
+            tr("Текущий профиль：$name · SNI ${p.first} · ${p.second}:${p.third}", "Current: $name · SNI ${p.first} · ${p.second}:${p.third}")
         } else {
-            tr("当前配置：未选择", "Current profile: none")
+            tr("Текущий профиль: не выбран", "Current profile: none")
         }
     }
     private fun syncConfigProfileSpinner(name: String) {
@@ -629,14 +629,14 @@ class MainActivity : Activity() {
         if (!profiles.containsKey(name)) return
         if (vpnRunning) {
             refreshHomeProfileSpinner()
-            toast(tr("请先断开 VPN，再切换配置", "Disconnect VPN before switching profile"))
+            toast(tr("Отключите VPN перед переключением профиля", "Disconnect VPN before switching profile"))
             return
         }
         applyProfileToInputs(name, persist = true)
         setCurrentProfileName(name)
         syncConfigProfileSpinner(name)
         updateCurrentProfileUi()
-        toast(tr("已切换配置：$name", "Profile switched: $name"))
+        toast(tr("Профиль переключен：$name", "Profile switched: $name"))
     }
     private fun applyProfileToInputs(name: String, persist: Boolean) {
         val p = profiles[name] ?: return
@@ -649,17 +649,17 @@ class MainActivity : Activity() {
     private fun saveAsNewProfile() {
         val base = profileNameInput.text?.toString().orEmpty().trim().ifBlank { normalizedEndpoint() }
         val name = uniqueProfileName(base)
-        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "yandex.ru" }, normalizedEndpointHost(), normalizedPort())
+        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "apteka.ru" }, normalizedEndpointHost(), normalizedPort())
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name); toast(tr("已保存为新方案：$name", "Saved as new profile: $name"))
     }
     private fun overwriteSelectedProfile() {
         val selected = selectedProfileName()
         val name = selected.ifBlank { profileNameInput.text?.toString().orEmpty().trim() }
-        if (name.isBlank()) return toast(tr("请先选择一个方案", "Select a profile first"))
-        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "yandex.ru" }, normalizedEndpointHost(), normalizedPort())
+        if (name.isBlank()) return toast(tr("Сначала выберите профиль", "Select a profile first"))
+        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "apteka.ru" }, normalizedEndpointHost(), normalizedPort())
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name)
         if (currentProfileName() == name) { setCurrentProfileName(name); refreshHomeProfileSpinner(); updateCurrentProfileUi() }
-        toast(tr("已覆盖当前方案：$name", "Current profile overwritten: $name"))
+        toast(tr("Текущий профиль перезаписан：$name", "Current profile overwritten: $name"))
     }
     private fun loadProfileForEditing(name: String) {
         if (!profiles.containsKey(name)) return
@@ -676,7 +676,7 @@ class MainActivity : Activity() {
         if (name.isBlank()) return
         profiles.remove(name)
         if (currentProfileName() == name) setCurrentProfileName(profiles.keys.firstOrNull().orEmpty())
-        persistProfiles(); refreshProfileSpinner(); toast("已删除：$name")
+        persistProfiles(); refreshProfileSpinner(); toast("Удалено：$name")
     }
 
     private fun loadSavedState() {
@@ -684,7 +684,7 @@ class MainActivity : Activity() {
         val saved = prefs.getString("endpoint", "162.159.198.2:443") ?: "162.159.198.2:443"
         endpointInput.setText(parseEndpointHost(saved))
         portInput.setText(prefs.getInt("connectPort", parseEndpointPort(saved, 443)).toString())
-        sniInput.setText(prefs.getString("sni", "yandex.ru") ?: "yandex.ru")
+        sniInput.setText(prefs.getString("sni", "apteka.ru") ?: "apteka.ru")
         selectedPackages.clear(); selectedPackages.addAll(prefs.getStringSet("selectedPackages", emptySet()) ?: emptySet())
         splitModeSwitch.isChecked = prefs.getBoolean("splitMode", false)
         if (currentProfileName().isBlank() && profiles.isNotEmpty()) setCurrentProfileName(profiles.keys.first())
@@ -695,7 +695,7 @@ class MainActivity : Activity() {
     private fun ensureAppsLoaded() {
         if (appsLoaded) return
         appsLoaded = true
-        appCountText.text = tr("正在读取应用列表…", "Loading app list…")
+        appCountText.text = tr("Загрузка списка приложений…", "Loading app list…")
         loadInstalledApps()
     }
     private fun loadInstalledApps() {
@@ -718,11 +718,11 @@ class MainActivity : Activity() {
     }
     private fun refreshAppList() {
         if (!::appListContainer.isInitialized) return
-        if (!appsLoaded) { appCountText.text = tr("进入应用页后读取应用列表", "App list loads when opening Apps"); return }
+        if (!appsLoaded) { appCountText.text = tr("Список приложений загрузится при открытии вкладки «Приложения»", "App list loads when opening Apps"); return }
         appListContainer.removeAllViews()
         val visible = visibleApps()
         visible.forEach { app -> appListContainer.addView(appRow(app), LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(5) }) }
-        appCountText.text = if (splitModeSwitch.isChecked) tr("已选择 ${selectedPackages.size} 个 · 显示 ${visible.size}/${allApps.size}", "Selected ${selectedPackages.size} · Showing ${visible.size}/${allApps.size}") else tr("全局模式：选择暂不生效 · 显示 ${visible.size}/${allApps.size}", "Global mode: selections inactive · Showing ${visible.size}/${allApps.size}")
+        appCountText.text = if (splitModeSwitch.isChecked) tr("Выбрано ${selectedPackages.size} прил. · Показать ${visible.size}/${allApps.size}", "Selected ${selectedPackages.size} · Showing ${visible.size}/${allApps.size}") else tr("Глобальный режим: выбор не активен · Отображается ${visible.size}/${allApps.size}", "Global mode: selections inactive · Showing ${visible.size}/${allApps.size}")
         updateModeUi()
     }
     private fun visibleApps(): List<AppEntry> {
@@ -736,13 +736,13 @@ class MainActivity : Activity() {
         if (!appsLoaded) return
         selectedPackages.addAll(visibleApps().map { it.packageName })
         markDirty(); saveSelectedApps(); refreshAppList()
-        toast(tr("已全选当前列表", "Selected all visible apps"))
+        toast(tr("Выбраны все приложения в списке", "Selected all visible apps"))
     }
     private fun clearAllVisibleApps() {
         if (!appsLoaded) return
         selectedPackages.removeAll(visibleApps().map { it.packageName }.toSet())
         markDirty(); saveSelectedApps(); refreshAppList()
-        toast(tr("已取消选择当前列表", "Cleared visible apps"))
+        toast(tr("Выбор со всех приложений в списке снят", "Cleared visible apps"))
     }
 
     private fun appRow(app: AppEntry): View = MaterialCheckBox(this).apply {
@@ -761,12 +761,12 @@ class MainActivity : Activity() {
     private fun updateModeUi() {
         if (!::modeValue.isInitialized) return
         if (splitModeSwitch.isChecked) {
-            modeValue.text = tr("分应用模式", "Split Mode")
-            modeHint.text = tr("仅“应用”页勾选的应用走 VPN；已勾选应用会显示在列表最上面。", "Only selected apps use VPN; selected apps stay on top.")
+            modeValue.text = tr("Раздельный режим", "Split Mode")
+            modeHint.text = tr("Через VPN идут только выбранные приложения. Выбранные приложения всегда отображаются в самом верху списка.", "Only selected apps use VPN; selected apps stay on top.")
             if (::appSection.isInitialized) { appSection.visibility = View.VISIBLE; appSection.alpha = 1.0f }
         } else {
-            modeValue.text = tr("全局模式", "Global Mode")
-            modeHint.text = tr("所有应用走 VPN；应用页的勾选会保留，但当前不生效。", "All apps use VPN; app selections are kept but inactive.")
+            modeValue.text = tr("Глобальный режим", "Global Mode")
+            modeHint.text = tr("Все приложения идут через VPN. Выбор на вкладке приложений сохраняется, но сейчас не активен.", "All apps use VPN; app selections are kept but inactive.")
             if (::appSection.isInitialized) { appSection.visibility = View.VISIBLE; appSection.alpha = 1.0f }
         }
     }
@@ -826,28 +826,29 @@ class MainActivity : Activity() {
 
 
 
-/*
+
     private fun connectVpn() {
         saveInputs()
-        if (vpnRunning) { toast(tr("已经在运行", "Already running")); return }
-        if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { toast(tr("请至少勾选一个应用", "Select at least one app")); log(tr("分应用模式下，请至少勾选一个应用再连接", "Select at least one app before connecting in split mode")); refreshState("未选择应用"); return }
+        if (vpnRunning) { toast(tr("Приложение уже работает", "Already running")); return }
+        if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { toast(tr("Выберите хотя бы одно приложение", "Select at least one app")); log(tr("Выберите хотя бы одно приложение перед подлючением в раздельном режиме", "Select at least one app before connecting in split mode")); refreshState("Приложение не выбрано"); return }
         if (!hasValidRegistration()) {
-            log(tr("未找到有效注册文件，正在自动注册…", "No valid registration found. Registering automatically…"))
+            log(tr("Не найдена действительная регистрация. Автоматическая регистрация…", "No valid registration found. Registering automatically…"))
             executor.execute {
                 try {
                     deleteInvalidConfigIfNeeded()
                     val result = Usqueandroid.register(configFile.absolutePath, "Android")
                     handler.post {
-                        if (result.isNullOrBlank() && hasValidRegistration()) { log(tr("注册成功，准备请求 VPN 权限…", "Registered. Requesting VPN permission…")); requestVpnAndStart() }
-                        else { log("注册失败: ${result.ifNullOrBlank(tr("未知错误", "Unknown error"))}"); refreshState(tr("注册失败", "Registration failed")) }
+                        if (result.isNullOrBlank() && hasValidRegistration()) { log(tr("Зарегистрировано. Запрашивается разрешение на использование VPN…", "Registered. Requesting VPN permission…")); requestVpnAndStart() }
+                        else { log("Регистрация не удалась: ${result.ifNullOrBlank(tr("Неизвестная ошибка", "Unknown error"))}"); refreshState(tr("Регистрация не удалась", "Registration failed")) }
                     }
-                } catch (e: Exception) { handler.post { log("注册异常: ${e.message ?: e.javaClass.simpleName}"); refreshState(tr("注册异常", "Registration error")) } }
+                } catch (e: Exception) { handler.post { log("Ошибка регистрации: ${e.message ?: e.javaClass.simpleName}"); refreshState(tr("Ошибка регистрации", "Registration error")) } }
             }
             return
         }
         requestVpnAndStart()
     }
-*/
+
+/*
     private fun connectVpn() {
         saveInputs()
         if (vpnRunning) { toast("Приложение уже работает"); return }
@@ -868,6 +869,7 @@ class MainActivity : Activity() {
         }
         requestVpnAndStart()
     }
+*/
 
     private fun requestVpnAndStart() {
         val prepareIntent = VpnService.prepare(this)
@@ -877,7 +879,7 @@ class MainActivity : Activity() {
     }
 
     private fun startTunnelNow() {
-        val sni = sniInput.text?.toString().orEmpty().ifBlank { "yandex.ru" }
+        val sni = sniInput.text?.toString().orEmpty().ifBlank { "apteka.ru" }
         val endpoint = "${normalizedEndpointHost()}:${normalizedPort()}"
         val splitMode = splitModeSwitch.isChecked
         val allowedApps = if (splitMode) selectedPackagesForVpn() else arrayListOf()
@@ -953,7 +955,7 @@ class MainActivity : Activity() {
                     val jsonEnd = responseText.lastIndexOf("}") + 1
                     val rawJson = responseText.substring(jsonStart, jsonEnd)
                     
-                    saveFinalConfig(rawJson, userIp, userPort, "yandex.ru")
+                    saveFinalConfig(rawJson, userIp, userPort, "apteka.ru")
 
                     (context as Activity).runOnUiThread {
                         Toast.makeText(context, "Регистрация успешна! Запуск...", Toast.LENGTH_SHORT).show()
@@ -996,7 +998,7 @@ class MainActivity : Activity() {
                 
                 put("endpoint", selectedIp.trim().ifBlank { "162.159.198.2" })
                 put("port", selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443)
-                put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/").ifBlank { "yandex.ru" })
+                put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/").ifBlank { "apteka.ru" })
             }
             
             configFile.writeText(finalConfig.toString(2))

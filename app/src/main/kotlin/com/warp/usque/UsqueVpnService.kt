@@ -60,7 +60,7 @@ class UsqueVpnService : VpnService() {
 
         /*
         val configPath = intent?.getStringExtra("configPath") ?: File(filesDir, "config.json").absolutePath
-        val sni = intent?.getStringExtra("sni") ?: "yandex.ru"
+        val sni = intent?.getStringExtra("sni") ?: "apteka.ru"
         val endpoint = intent?.getStringExtra("endpoint") ?: "162.159.198.2:443"
         val splitMode = intent?.getBooleanExtra("splitMode", false) ?: false
         val allowedApps = intent?.getStringArrayListExtra("allowedApps") ?: arrayListOf()
@@ -71,14 +71,14 @@ class UsqueVpnService : VpnService() {
         val allowedApps = intent?.getStringArrayListExtra("allowedApps") ?: arrayListOf()
 
         // УМНЫЙ ЧИТАТЕЛЬ КОНФИГА: Читаем сохраненные воркером MASQUE данные
-        var sni = "yandex.ru"
+        var sni = "apteka.ru"
         var endpoint = "162.159.198.2:443"
         
         try {
             val configFile = File(filesDir, "config.json")
             if (configFile.exists()) {
                 val json = org.json.JSONObject(configFile.readText())
-                sni = json.optString("sni", "yandex.ru")
+                sni = json.optString("sni", "apteka.ru")
                 
                 // Извлекаем чистый IP и принудительно подставляем валидный порт
                 val rawEndpoint = json.optString("endpoint", "162.159.198.2")
@@ -88,12 +88,12 @@ class UsqueVpnService : VpnService() {
                 endpoint = "$rawEndpoint:$rawPort"
             } else {
                 // Если файла нет (резервный случай), берем из интерфейса
-                sni = intent?.getStringExtra("sni") ?: "yandex.ru"
+                sni = intent?.getStringExtra("sni") ?: "apteka.ru"
                 endpoint = intent?.getStringExtra("endpoint") ?: "162.159.198.2:443"
             }
         } catch (e: Exception) {
             Log.e(TAG, "Ошибка чтения config.json в сервисе, откат на дефолты: ${e.message}")
-            sni = intent?.getStringExtra("sni") ?: "yandex.ru"
+            sni = intent?.getStringExtra("sni") ?: "apteka.ru"
             endpoint = intent?.getStringExtra("endpoint") ?: "162.159.198.2:443"
         }
 
