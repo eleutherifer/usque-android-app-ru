@@ -977,33 +977,30 @@ class MainActivity : Activity() {
         try {
             val cloudflareData = JSONObject(serverResponseJson)
             
-            // ОЧИСТКА IP ОТ СЛЭШЕЙ: Вырезаем маски /32 и /128, оставляя только чистые адреса
+            // 1. Очищаем IP-адреса от масок /32 и /128
             val rawIpv4 = cloudflareData.getString("client_ipv4")
             val cleanIpv4 = if (rawIpv4.contains("/")) rawIpv4.substringBefore("/") else rawIpv4
 
             val rawIpv6 = cloudflareData.getString("client_ipv6")
             val cleanIpv6 = if (rawIpv6.contains("/")) rawIpv6.substringBefore("/") else rawIpv6
 
+            // 2. УМНАЯ УПАКОВКА В МАССИВЫ (Как требует Go-парсер ядра usque)
+            val ipv4Array = JSONArray().apply { put(cleanIpv4.trim()) }
+            val ipv6Array = JSONArray().apply { put(cleanIpv6.trim()) }
+
             val finalConfig = JSONObject().apply {
-                // 1. Криптографические ключи для MASQUE
+                // Криптографические ключи MASQUE
                 put("private_key", cloudflareData.getString("privKey"))
                 put("public_key", cloudflareData.getString("cloudflare_pub"))
                 
-                // 2. Очищенные от слэшей внутренние IP (То, что ждет UsqueVpnService)
-                put("ipv4", cleanIpv4.trim())
-                put("ipv6", cleanIpv6.trim())
+                // Записываем массивы адресов, чтобы Usqueandroid.getAssignedIPv4 успешно их распарсил
+                put("ipv4", ipv4Array)
+                put("ipv6", ipv6Array)
                 
-                // 3. Сетевые параметры маскировки ТСПУ из интерфейса
+                // Сетевые настройки маскировки ТСПУ
                 put("endpoint", selectedIp.trim().ifBlank { "162.159.198.2" })
                 put("port", selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443)
                 put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/").ifBlank { "yandex.ru" })
             }
-            
-            configFile.writeText(finalConfig.toString(2))
-            android.util.Log.d("USQUE_BUILD", "config.json успешно очищен от слэшей под стандарты Android!")
-        } catch (e: Exception) {
-            android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
-        }
-    }
 
 }
