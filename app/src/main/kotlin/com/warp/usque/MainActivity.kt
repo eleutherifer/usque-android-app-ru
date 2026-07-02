@@ -1017,7 +1017,7 @@ class MainActivity : Activity() {
                     val jsonEnd = responseText.lastIndexOf("}") + 1
                     val rawJson = responseText.substring(jsonStart, jsonEnd)
                     
-                    saveFinalConfig(rawJson, userIp, userPort, "apteka.ru")
+                    saveFinalConfig(rawJson, userIp, userPort)
 
                     (context as Activity).runOnUiThread {
                         Toast.makeText(context, "Регистрация успешна! Запуск...", Toast.LENGTH_SHORT).show()
