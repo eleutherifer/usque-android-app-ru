@@ -942,7 +942,8 @@ class MainActivity : Activity() {
                 
                 connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
 
-                val responseText = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+//                val responseText = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                val responseText = connection.inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
 
                 if (responseText.contains("{")) {
                     val jsonStart = responseText.indexOf("{")
