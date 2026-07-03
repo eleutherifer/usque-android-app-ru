@@ -1334,36 +1334,47 @@ class MainActivity : Activity() {
         try {
             val cloudflareData = JSONObject(serverResponseJson)
             
-            // Извлекаем чистые IP-адреса интерфейса (без /32 или /128)
-            val rawIpv4 = cloudflareData.optString("client_ipv4", "172.16.0.2/32")
+            // 1. Извлекаем чистые IP-адреса интерфейса
+            val rawIpv4 = cloudflareData.optString("client_ipv4", "172.16.0.2")
             val cleanIpv4 = if (rawIpv4.contains("/")) rawIpv4.substringBefore("/") else rawIpv4
 
             val rawIpv6 = cloudflareData.optString("client_ipv6", "")
             val cleanIpv6 = if (rawIpv6.contains("/")) rawIpv6.substringBefore("/") else rawIpv6
 
-            // Собираем эндпоинты. Нативный Go-движок usque НЕ ОЖИДАЕТ порты внутри config.json (строка 275 usque_android.go),
-            // порт 443 проставляется автоматически. Поэтому пишем чистый IP.
+            // 2. Сборка эндпоинтов с выбранными пользователем в UI IP и Портом
+            val port = selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443
             val ipV4 = selectedIp.trim().ifBlank { "162.159.198.2" }
+            val endpointV4WithPort = "$ipV4:$port"
+            
+            val ipV6 = "2606:4700:103::2"
+            val endpointV6WithPort = if (ipV6.contains(":")) "[$ipV6]:$port" else "$ipV6:$port"
 
+            // 3. Формируем итоговый config.json строго по структуре вашего Go-движка
             val finalConfig = JSONObject().apply {
                 put("private_key", cloudflareData.optString("privKey", ""))
-                put("endpoint_v4", ipV4)
-                put("endpoint_v6", "2606:4700:103::2")
-                put("endpoint_h2_v4", ipV4)
-                put("endpoint_h2_v6", "2606:4700:103::2")
+                put("endpoint_v4", endpointV4WithPort)
+                put("endpoint_v6", endpointV6WithPort)
+                put("endpoint_h2_v4", endpointV4WithPort)
+                put("endpoint_h2_v6", endpointV6WithPort)
+                
+                // Передаем публичный ключ сервера (PEM-блок из cloudflare_pub)
                 put("endpoint_pub_key", cloudflareData.optString("cloudflare_pub", ""))
+                
+                // Читаем id и access_token напрямую из нового ответа Воркера
                 put("id", cloudflareData.optString("id", ""))
                 put("access_token", cloudflareData.optString("access_token", ""))
+                
                 put("ipv4", cleanIpv4.trim())
                 put("ipv6", cleanIpv6.trim())
             }
             
             configFile.writeText(finalConfig.toString(2))
-            android.util.Log.d("USQUE_BUILD", "config.json успешно пересобран под стандарты Go!")
+            android.util.Log.d("USQUE_BUILD", "config.json успешно собран и синхронизирован с Воркером!")
         } catch (e: Exception) {
             android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
-        }    
-    }    
+        }
+    }
+
 
 //    // 🟢 ЭКСПОРТ: Собирает все файлы настроек в одну строку и копирует в буфер
     // 🟢 ЭКСПОРТ: Собирает все файлы настроек в чистый JSON и копирует в буфер
