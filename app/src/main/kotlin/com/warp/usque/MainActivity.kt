@@ -1362,11 +1362,12 @@ class MainActivity : Activity() {
             android.util.Log.d("USQUE_BUILD", "config.json успешно пересобран под стандарты Go!")
         } catch (e: Exception) {
             android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
-    }        
+        }    
+    }    
 
 //    // 🟢 ЭКСПОРТ: Собирает все файлы настроек в одну строку и копирует в буфер
     // 🟢 ЭКСПОРТ: Собирает все файлы настроек в чистый JSON и копирует в буфер
-        fun exportAllConfigToClipboard() {
+    fun exportAllConfigToClipboard() {
         try {
             val exportData = JSONObject()
 
