@@ -977,8 +977,13 @@ class MainActivity : Activity() {
                     deleteInvalidConfigIfNeeded()
                     val result = Usqueandroid.register(configFile.absolutePath, "Android")
                     handler.post {
-                        if (result.isNullOrBlank() && hasValidRegistration()) { log(tr("Зарегистрировано. Запрашивается разрешение на использование VPN…", "Registered. Requesting VPN permission…")); requestVpnAndStart() }
-                        else { log("Регистрация не удалась: ${result.ifNullOrBlank(tr("Неизвестная ошибка", "Unknown error"))}"); refreshState(tr("Регистрация не удалась", "Registration failed")) }
+                        if (result.isNullOrBlank() && hasValidRegistration()) { 
+                            log(tr("Зарегистрировано. Запрашивается разрешение на использование VPN…", "Registered. Requesting VPN permission…")); 
+                            requestVpnAndStart() 
+                        } else { 
+                            log("Регистрация не удалась: ${result.ifNullOrBlank(tr("Неизвестная ошибка", "Unknown error"))}"); 
+                            refreshState(tr("Регистрация не удалась", "Registration failed")) 
+                        }
                     }
                 } catch (e: Exception) { handler.post { log("Ошибка регистрации: ${e.message ?: e.javaClass.simpleName}"); refreshState(tr("Ошибка регистрации", "Registration error")) } }
             }
@@ -1108,29 +1113,34 @@ class MainActivity : Activity() {
                         if (result.isNullOrBlank() && hasValidRegistration()) { 
                             log(tr("Зарегистрировано. Запрашивается разрешение на использование VPN…", "Registered. Requesting VPN permission…"))
                             
-                            // ИСПРАВЛЕНИЕ: Перезаписываем IP-адрес в созданном конфиге на тот, что выбран пользователем в UI
-                            val selectedIp = normalizedEndpointHost()
-                            val selectedPort = normalizedPort().toString()
-                            saveFinalConfig(configFile.readText(), selectedIp, selectedPort)
+//                            // ИСПРАВЛЕНИЕ: Перезаписываем IP-адрес в созданном конфиге на тот, что выбран пользователем в UI
+//                            val selectedIp = normalizedEndpointHost()
+//                            val selectedPort = normalizedPort().toString()
+//                            saveFinalConfig(configFile.readText(), selectedIp, selectedPort)
                             
                             requestVpnAndStart() 
                         } else { 
-                            // Если метод вернул ошибку, но исключения не было — тоже пробуем воркер
-                            log("Нативная регистрация вернула ошибку: $result. Пробуем Cloudflare Worker...")
-                            val selectedIp = normalizedEndpointHost()
-                            val selectedPort = normalizedPort().toString()
-                            fetchKeysFromWorkerProxy(this@MainActivity, selectedIp, selectedPort)
+                            log("Регистрация не удалась: ${result.ifNullOrBlank(tr("Неизвестная ошибка", "Unknown error"))}"); 
+                            refreshState(tr("Регистрация не удалась", "Registration failed")) 
+
+//                            // Если метод вернул ошибку, но исключения не было — тоже пробуем воркер
+//                            log("Нативная регистрация вернула ошибку: $result. Пробуем Cloudflare Worker...")
+//                            val selectedIp = normalizedEndpointHost()
+//                            val selectedPort = normalizedPort().toString()
+//                            fetchKeysFromWorkerProxy(this@MainActivity, selectedIp, selectedPort)
                         }
                     }
                 } catch (e: Exception) { 
                     handler.post { 
-                        log("Ошибка встроенной регистрации: ${e.message ?: e.javaClass.simpleName}. Переключаемся на Cloudflare Worker...")
+                        log("Ошибка встроенной регистрации: ${e.message ?: e.javaClass.simpleName}"); 
+                        refreshState(tr("Ошибка встроенной регистрации", "Registration error")) 
 
-                        val selectedIp = normalizedEndpointHost()
-                        val selectedPort = normalizedPort().toString()
-            
-                        // 🟢 ИСПРАВЛЕНИЕ: Используем явный указатель на класс `this@MainActivity` вместо `this`
-                        fetchKeysFromWorkerProxy(this@MainActivity, selectedIp, selectedPort)
+//                        log("Ошибка встроенной регистрации: ${e.message ?: e.javaClass.simpleName}. Переключаемся на Cloudflare Worker...")
+//                        val selectedIp = normalizedEndpointHost()
+//                        val selectedPort = normalizedPort().toString()
+//            
+//                        // 🟢 ИСПРАВЛЕНИЕ: Используем явный указатель на класс `this@MainActivity` вместо `this`
+//                        fetchKeysFromWorkerProxy(this@MainActivity, selectedIp, selectedPort)
                     } 
                 }
             }
