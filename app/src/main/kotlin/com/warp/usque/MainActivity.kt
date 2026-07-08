@@ -389,7 +389,6 @@ class MainActivity : Activity() {
 
         exportConfigBtn = secondaryButton(tr("Экспорт всего конфига", "Export entire config"))
         importConfigBtn = secondaryButton(tr("Импорт из буфера", "Import from buffer"))
-        
         profileBox.addView(TextView(this).apply { text = tr("Профили настроек", "Profiles"); textSize = 18f; setTextColor(textColor); setTypeface(null, Typeface.BOLD) })
         profileBox.addView(TextView(this).apply { text = tr("Сохранить текущие SNI / Endpoint / Port для быстрого переключения.", "Save current SNI / Endpoint / Port for quick switching."); textSize = 12f; setTextColor(subText); setPadding(0, dp(2), 0, dp(6)) })
         profileBox.addView(profileSpinner, LinearLayout.LayoutParams(-1, dp(42)))
@@ -442,7 +441,13 @@ class MainActivity : Activity() {
         }
 
         exportConfigBtn = secondaryButton(tr("Экспорт всего конфига", "Export entire config"))
+        exportConfigBtn.isSingleLine = false
+        exportConfigBtn.maxLines = 3
+
         importConfigBtn = secondaryButton(tr("Импорт из буфера", "Import from buffer"))
+        importConfigBtn.isSingleLine = false
+        importConfigBtn.maxLines = 3
+
         
         profileBox.addView(TextView(this).apply { text = tr("Профили настроек", "Profiles"); textSize = 18f; setTextColor(textColor); setTypeface(null, Typeface.BOLD) })
         profileBox.addView(TextView(this).apply { text = tr("Сохранить текущие SNI / Endpoint / Port для быстрого переключения.", "Save current SNI / Endpoint / Port for quick switching."); textSize = 12f; setTextColor(subText); setPadding(0, dp(2), 0, dp(6)) })
