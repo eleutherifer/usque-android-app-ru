@@ -443,7 +443,7 @@ class MainActivity : Activity() {
 */
 
         exportConfigBtn = secondaryButton(tr("Экспорт всего конфига", "Export entire config"))
-        importConfigBtn = secondaryButton(tr("Импорт из буфера", "Import from buffer"))
+        importConfigBtn = secondaryButton(tr("Импорт конфига из буфера", "Import config from buffer"))
 
         val backupButtonsList = listOf(exportConfigBtn, importConfigBtn)
         backupButtonsList.forEach { btn ->
