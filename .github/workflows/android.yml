@@ -177,7 +177,7 @@ jobs:
           if ! gh release view "$tag" >/dev/null 2>&1; then
             gh release create "$tag" \
               --target "$GITHUB_SHA" \
-              --title "Usque Android App $tag" \
+              --title "Usque Android App RU $tag" \
               --notes "Automated APK build for $tag."
           else
             gh release edit "$tag" --target "$GITHUB_SHA"
