@@ -806,6 +806,7 @@ class MainActivity : Activity() {
         var index = 2
         while (profiles.containsKey("$base $index")) index++
         return "$base $index"
+    }
     private fun deleteSelectedProfile() {
         val name = selectedProfileName()
         if (name.isBlank()) return
