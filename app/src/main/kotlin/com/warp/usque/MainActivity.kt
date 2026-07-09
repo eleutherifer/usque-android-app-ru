@@ -442,7 +442,7 @@ class MainActivity : Activity() {
         }
 */
 
-        exportConfigBtn = secondaryButton(tr("Экспорт всего конфига", "Export entire config"))
+        exportConfigBtn = secondaryButton(tr("Экспорт всего конфига в буфер", "Export entire config to buffer"))
         importConfigBtn = secondaryButton(tr("Импорт конфига из буфера", "Import config from buffer"))
 
         val backupButtonsList = listOf(exportConfigBtn, importConfigBtn)
