@@ -87,6 +87,7 @@ jobs:
       - name: gomobile bind
         working-directory: usque-src
         run: |
+          go get -tool golang.org/x/mobile/cmd/gobind
           go mod tidy
           gomobile bind -v \
             -target=android/arm64,android/arm \
