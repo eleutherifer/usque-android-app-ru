@@ -1068,7 +1068,7 @@ class MainActivity : Activity() {
                         val selectedIp = normalizedEndpointHost()
                         val selectedPort = normalizedPort().toString()
             
-                        // 🟢 ВОТ ЗДЕСЬ ПРОИСХОДИТ ОБРАЩЕНИЕ К ВОРКЕРУ:
+                        // ВОТ ЗДЕСЬ ПРОИСХОДИТ ОБРАЩЕНИЕ К ВОРКЕРУ:
                         fetchKeysFromWorkerProxy(this, selectedIp, selectedPort)
 
 
@@ -1097,7 +1097,7 @@ class MainActivity : Activity() {
             val selectedIp = normalizedEndpointHost()
             val selectedPort = normalizedPort().toString()
             
-            // 🟢 ВОТ ЗДЕСЬ ПРОИСХОДИТ ОБРАЩЕНИЕ К ВОРКЕРУ:
+            // ВОТ ЗДЕСЬ ПРОИСХОДИТ ОБРАЩЕНИЕ К ВОРКЕРУ:
             fetchKeysFromWorkerProxy(this, selectedIp, selectedPort)
             return
         }
@@ -1155,7 +1155,7 @@ class MainActivity : Activity() {
 //                        val selectedIp = normalizedEndpointHost()
 //                        val selectedPort = normalizedPort().toString()
 //            
-//                        // 🟢 ИСПРАВЛЕНИЕ: Используем явный указатель на класс `this@MainActivity` вместо `this`
+//                        // ИСПРАВЛЕНИЕ: Используем явный указатель на класс `this@MainActivity` вместо `this`
 //                        fetchKeysFromWorkerProxy(this@MainActivity, selectedIp, selectedPort)
                     } 
                 }
@@ -1408,8 +1408,8 @@ class MainActivity : Activity() {
     }
 */
 
-//    // 🟢 ЭКСПОРТ: Собирает все файлы настроек в одну строку и копирует в буфер
-    // 🟢 ЭКСПОРТ: Собирает все файлы настроек в чистый JSON и копирует в буфер
+//    // ЭКСПОРТ: Собирает все файлы настроек в одну строку и копирует в буфер
+    // ЭКСПОРТ: Собирает все файлы настроек в чистый JSON и копирует в буфер
     fun exportAllConfigToClipboard() {
         try {
             val exportData = JSONObject()
@@ -1447,8 +1447,8 @@ class MainActivity : Activity() {
         }
     }
 
-//    // 🟢 ИМПОРТ: Читает строку из буфера, распаковывает и восстанавливает файлы
-    // 🟢 ИМПОРТ: Читает чистый JSON из буфера и восстанавливает файлы настройки
+//    //  ИМПОРТ: Читает строку из буфера, распаковывает и восстанавливает файлы
+    //  ИМПОРТ: Читает чистый JSON из буфера и восстанавливает файлы настройки
     fun importAllConfigFromClipboard() {
         try {
             if (vpnRunning) {
