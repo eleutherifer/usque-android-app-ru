@@ -340,7 +340,7 @@ class MainActivity : Activity() {
             textSize = 16f
             setTextColor(textColor)
             setPadding(0, dp(6), 0, 0)
-            setOnCheckedChangeListener { _, _ -> markDirty() }
+            setOnCheckedChangeListener { _, _ -> markDirty(); saveInputs() }
         }
         modeBox.addView(modeValue)
         modeBox.addView(modeHint)
