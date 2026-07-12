@@ -989,11 +989,14 @@ class MainActivity : Activity() {
     }
 
     private fun refreshState(extra: String = "") {
-        val state = if (vpnRunning) tr("Подключено", "Connected") else tr("Отключено", "Disconnected")
+        val state = when {
+            !vpnRunning -> tr("Отключено", "Disconnected")
+            tunnelReallyConnected -> tr("Подключено", "Connected")
+            else -> tr("Подключение…", "Connecting…")
+        }
         statusBanner.text = state
         statusText.text = "${tr("Статус", "Status")}: $state${if (extra.isNotBlank()) " · $extra" else ""}"
-        statusBanner.setTextColor(if (vpnRunning) green else onPrimary)
-        connectButton.text = if (vpnRunning) tr("Отключить VPN", "Disconnect VPN") else tr("Подключить VPN", "Connect VPN")
+        statusBanner.setTextColor(if (vpnRunning && tunnelReallyConnected) green else onPrimary)        connectButton.text = if (vpnRunning) tr("Отключить VPN", "Disconnect VPN") else tr("Подключить VPN", "Connect VPN")
         val dark = android.content.res.ColorStateList.valueOf(darkAccent)
         connectButton.backgroundTintList = dark
         connectButton.setTextColor(Color.WHITE)
