@@ -128,6 +128,9 @@ class MainActivity : Activity() {
     override fun onStart() {
         super.onStart()
         registerReceiver(vpnStateReceiver, IntentFilter(UsqueVpnService.ACTION_VPN_STATE), Context.RECEIVER_NOT_EXPORTED)
+        vpnRunning = UsqueVpnService.isServiceRunning
+        tunnelReallyConnected = UsqueVpnService.isServiceConnected
+        refreshState()
     }
     override fun onStop() {
         super.onStop()

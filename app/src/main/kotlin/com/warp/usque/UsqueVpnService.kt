@@ -47,6 +47,10 @@ class UsqueVpnService : VpnService() {
     @Volatile private var lastSplitMode: Boolean = false
     @Volatile private var lastUseHttp2: Boolean = false    
     @Volatile private var lastAllowedApps: ArrayList<String> = arrayListOf()
+    @Volatile var isServiceRunning: Boolean = false
+        private set
+    @Volatile var isServiceConnected: Boolean = false
+        private set
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         activeService = this
@@ -253,6 +257,8 @@ class UsqueVpnService : VpnService() {
     }
 
     private fun broadcastState(state: String, message: String = "") {
+        isServiceRunning = (state != "disconnected")
+        isServiceConnected = (state == "connected")
         sendBroadcast(Intent(ACTION_VPN_STATE).apply {
             setPackage(packageName)
             putExtra(EXTRA_STATE, state)
