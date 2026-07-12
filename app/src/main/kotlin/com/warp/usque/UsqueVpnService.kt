@@ -244,6 +244,14 @@ class UsqueVpnService : VpnService() {
         super.onDestroy()
     }
 
+    override fun onRevoke() {
+        Log.w(TAG, "onRevoke: система отозвала VPN (скорее всего, запущен другой VPN)")
+        manualStop.set(true)
+        broadcastState("disconnected", "отозван системой/другим VPN")
+        stopVpn("revoked")
+        super.onRevoke()
+    }
+
     private fun broadcastState(state: String, message: String = "") {
         sendBroadcast(Intent(ACTION_VPN_STATE).apply {
             setPackage(packageName)

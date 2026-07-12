@@ -115,6 +115,12 @@ class MainActivity : Activity() {
                     val msg = intent.getStringExtra(UsqueVpnService.EXTRA_MESSAGE).orEmpty()
                     refreshState(tr("Переподключение… $msg", "Reconnecting… $msg"))
                 }
+                "disconnected" -> {
+                    vpnRunning = false
+                    tunnelReallyConnected = false
+                    val msg = intent.getStringExtra(UsqueVpnService.EXTRA_MESSAGE).orEmpty()
+                    refreshState(msg)
+                }
             }
         }
     }
