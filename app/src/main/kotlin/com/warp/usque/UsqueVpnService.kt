@@ -29,6 +29,10 @@ class UsqueVpnService : VpnService() {
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "usque_vpn"
         @Volatile private var activeService: UsqueVpnService? = null
+        @Volatile var isServiceRunning: Boolean = false
+            private set
+        @Volatile var isServiceConnected: Boolean = false
+            private set
 
         fun stopActiveTunnel() {
             activeService?.stopVpn("external stop") ?: runCatching { Usqueandroid.stopTunnel() }
@@ -47,10 +51,6 @@ class UsqueVpnService : VpnService() {
     @Volatile private var lastSplitMode: Boolean = false
     @Volatile private var lastUseHttp2: Boolean = false    
     @Volatile private var lastAllowedApps: ArrayList<String> = arrayListOf()
-    @Volatile var isServiceRunning: Boolean = false
-        private set
-    @Volatile var isServiceConnected: Boolean = false
-        private set
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         activeService = this
