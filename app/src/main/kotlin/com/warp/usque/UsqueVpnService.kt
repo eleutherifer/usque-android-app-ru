@@ -45,6 +45,7 @@ class UsqueVpnService : VpnService() {
     private val running = AtomicBoolean(false)
     private val manualStop = AtomicBoolean(false)
     private val restarting = AtomicBoolean(false)
+    private val stopping = AtomicBoolean(false)
     @Volatile private var lastConfigPath: String = ""
     @Volatile private var lastSni: String = ""
     @Volatile private var lastEndpoint: String = ""
@@ -84,6 +85,7 @@ class UsqueVpnService : VpnService() {
     }
 
     private fun startNativeTunnel(configPath: String, sni: String, endpoint: String, splitMode: Boolean, useHttp2: Boolean, allowedApps: ArrayList<String>) {
+        stopping.set(false)
         try {
             running.set(true)
             Log.i(TAG, "starting vpn service endpoint=$endpoint sni=$sni splitMode=$splitMode allowedApps=${allowedApps.size} config=$configPath")
@@ -223,6 +225,10 @@ class UsqueVpnService : VpnService() {
     }
 
     private fun stopVpn(reason: String = "stop") {
+        if (!stopping.compareAndSet(false, true)) {
+            Log.i(TAG, "stopVpn($reason) skipped — уже останавливается")
+            return
+        }
         Log.i(TAG, "stopping vpn: $reason fd=$detachedTunFd running=${running.get()}")
         running.set(false)
         runCatching { Usqueandroid.stopTunnel() }
