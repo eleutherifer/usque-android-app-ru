@@ -85,7 +85,6 @@ class UsqueVpnService : VpnService() {
     }
 
     private fun startNativeTunnel(configPath: String, sni: String, endpoint: String, splitMode: Boolean, useHttp2: Boolean, allowedApps: ArrayList<String>) {
-        stopping.set(false)
         try {
             running.set(true)
             Log.i(TAG, "starting vpn service endpoint=$endpoint sni=$sni splitMode=$splitMode allowedApps=${allowedApps.size} config=$configPath")
@@ -229,17 +228,21 @@ class UsqueVpnService : VpnService() {
             Log.i(TAG, "stopVpn($reason) skipped — уже останавливается")
             return
         }
-        Log.i(TAG, "stopping vpn: $reason fd=$detachedTunFd running=${running.get()}")
-        running.set(false)
-        runCatching { Usqueandroid.stopTunnel() }
-            .onFailure { Log.w(TAG, "native stopTunnel failed", it) }
-        runCatching { tun?.close() }
-            .onFailure { Log.w(TAG, "tun close failed", it) }
-        tun = null
-        if (detachedTunFd >= 0) {
-            runCatching { Os.close(fileDescriptorFromInt(detachedTunFd)) }
-                .onFailure { Log.w(TAG, "detached fd close failed", it) }
-            detachedTunFd = -1
+        try {
+            Log.i(TAG, "stopping vpn: $reason fd=$detachedTunFd running=${running.get()}")
+            running.set(false)
+            runCatching { Usqueandroid.stopTunnel() }
+                .onFailure { Log.w(TAG, "native stopTunnel failed", it) }
+            runCatching { tun?.close() }
+                .onFailure { Log.w(TAG, "tun close failed", it) }
+            tun = null
+            if (detachedTunFd >= 0) {
+                runCatching { Os.close(fileDescriptorFromInt(detachedTunFd)) }
+                    .onFailure { Log.w(TAG, "detached fd close failed", it) }
+                detachedTunFd = -1
+            }
+        } finally {
+            stopping.set(false)
         }
     }
 
