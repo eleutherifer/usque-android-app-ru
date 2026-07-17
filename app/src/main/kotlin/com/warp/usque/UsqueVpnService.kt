@@ -265,7 +265,11 @@ class UsqueVpnService : VpnService() {
         Log.w(TAG, "onRevoke: система отозвала VPN (скорее всего, запущен другой VPN)")
         manualStop.set(true)
         broadcastState("disconnected", "отозван системой/другим VPN")
-        stopVpn("revoked")
+        // НЕ зовём stopVpn() напрямую здесь — Android в этот самый момент сам
+        // разбирает интерфейс через Binder, и наша параллельная попытка закрыть
+        // тот же fd синхронно как раз и создавала гонку с системным teardown.
+        // super.onRevoke() запускает штатный stopSelf() → onDestroy() → stopVpn(),
+        // асинхронно — ровно так, как это устроено в оригинале (там onRevoke() нет вовсе).
         super.onRevoke()
     }
 
