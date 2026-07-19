@@ -92,7 +92,7 @@ class UsqueVpnService : VpnService() {
             Usqueandroid.resetConnectionOptions()
             Usqueandroid.setSNI(sni)
             Usqueandroid.setEndpoint(endpoint)
-//            Usqueandroid.setUseHttp2(useHttp2)
+            Usqueandroid.setUseHttp2(useHttp2)
             Log.i(TAG, "native endpoint now=${runCatching { Usqueandroid.getEndpoint() }.getOrDefault("")}")
 
             val builder = Builder()
@@ -262,8 +262,7 @@ class UsqueVpnService : VpnService() {
         super.onDestroy()
     }
 
-// 2026.07.19 TEST Функция временно закомментирована
-/*
+// 2026.07.19 TEST ТЕСТ Функция временно закомментирована
     override fun onRevoke() {
         Log.w(TAG, "onRevoke: система отозвала VPN (скорее всего, запущен другой VPN)")
         manualStop.set(true)
@@ -275,7 +274,6 @@ class UsqueVpnService : VpnService() {
         // асинхронно — ровно так, как это устроено в оригинале (там onRevoke() нет вовсе).
         super.onRevoke()
     }
-*/
 
     private fun broadcastState(state: String, message: String = "") {
         isServiceRunning = (state != "disconnected")
