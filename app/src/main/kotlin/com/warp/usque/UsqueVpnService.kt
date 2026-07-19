@@ -147,12 +147,12 @@ class UsqueVpnService : VpnService() {
                 }
                 override fun onDisconnected(reason: String?) {
                     Log.w(TAG, "tunnel disconnected: $reason")
-                    broadcastState("reconnecting", reason.orEmpty())
+                    broadcastState(if (manualStop.get()) "disconnected" else "reconnecting", reason.orEmpty())
                     handleTunnelFailure("native disconnected: ${reason.orEmpty()}")
                 }
                 override fun onError(message: String?) {
                     Log.e(TAG, "tunnel error: $message")
-                    broadcastState("reconnecting", message.orEmpty())
+                    broadcastState(if (manualStop.get()) "disconnected" else "reconnecting", message.orEmpty())
                     handleTunnelFailure("native error: ${message.orEmpty()}")
                 }
             })
