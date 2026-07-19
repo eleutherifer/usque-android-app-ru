@@ -262,6 +262,8 @@ class UsqueVpnService : VpnService() {
         super.onDestroy()
     }
 
+// 2026.07.19 TEST Функция временно закомментирована
+/*
     override fun onRevoke() {
         Log.w(TAG, "onRevoke: система отозвала VPN (скорее всего, запущен другой VPN)")
         manualStop.set(true)
@@ -273,6 +275,7 @@ class UsqueVpnService : VpnService() {
         // асинхронно — ровно так, как это устроено в оригинале (там onRevoke() нет вовсе).
         super.onRevoke()
     }
+*/
 
     private fun broadcastState(state: String, message: String = "") {
         isServiceRunning = (state != "disconnected")
