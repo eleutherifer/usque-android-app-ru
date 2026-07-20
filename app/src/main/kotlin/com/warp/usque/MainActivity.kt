@@ -103,31 +103,6 @@ class MainActivity : Activity() {
 
     private var tunnelReallyConnected = false
 
-/*
-    private val vpnStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.getStringExtra(UsqueVpnService.EXTRA_STATE)) {
-                "connected" -> {
-                    tunnelReallyConnected = true
-                    refreshState(if (splitModeSwitch.isChecked) tr("Раздельный режим", "Split mode") else tr("Глобальный режим", "Global Mode"))
-                }
-                "reconnecting" -> {
-                    tunnelReallyConnected = false
-                    val msg = intent.getStringExtra(UsqueVpnService.EXTRA_MESSAGE).orEmpty()
-                    refreshState(tr("Переподключение… $msg", "Reconnecting… $msg"))
-                }
-                "disconnected" -> {
-                    vpnRunning = false
-                    tunnelReallyConnected = false
-                    val msg = intent.getStringExtra(UsqueVpnService.EXTRA_MESSAGE).orEmpty()
-                    refreshState(msg)
-                }
-            }
-        }
-    }
-*/
-
-
 // 2026.07.19 TEST ТЕСТ Функции onStart(), onStop() закомментированы для проверки
     override fun onStart() {
         super.onStart()
@@ -145,7 +120,7 @@ class MainActivity : Activity() {
                     "disconnected" -> {
                         vpnRunning = false
                         tunnelReallyConnected = false
-                        refreshState(message)
+                        refreshState(tr("Остановлено", "Stopped"))
                     }
                 }
             }
