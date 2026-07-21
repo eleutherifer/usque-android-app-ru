@@ -1001,10 +1001,13 @@ class MainActivity : Activity() {
             tunnelReallyConnected -> tr("Подключено", "Connected")
             else -> tr("Подключение…", "Connecting…")
         }
-        statusBanner.text = state
-        statusText.text = "${tr("Статус", "Status")}: $state${if (extra.isNotBlank()) " · $extra" else ""}"
-        statusBanner.setTextColor(if (vpnRunning && tunnelReallyConnected) green else onPrimary)
-        connectButton.text = if (vpnRunning) tr("Отключить VPN", "Disconnect VPN") else tr("Подключить VPN", "Connect VPN")
+        if (statusBanner.text != state) statusBanner.text = state
+        val newStatusText = "${tr("Статус", "Status")}: $state${if (extra.isNotBlank()) " · $extra" else ""}"
+        if (statusText.text != newStatusText) statusText.text = newStatusText
+        val newColor = if (vpnRunning && tunnelReallyConnected) green else onPrimary
+        statusBanner.setTextColor(newColor) // цвет всегда дешёвая операция, можно не проверять
+        val newBtnText = if (vpnRunning) tr("Отключить VPN", "Disconnect VPN") else tr("Подключить VPN", "Connect VPN")
+        if (connectButton.text != newBtnText) connectButton.text = newBtnText        
         val dark = android.content.res.ColorStateList.valueOf(darkAccent)
         connectButton.backgroundTintList = dark
         connectButton.setTextColor(Color.WHITE)
@@ -1016,11 +1019,7 @@ class MainActivity : Activity() {
         }
         updateConfigState(extra)
     }
-
-
-
-
-
+    
     private fun connectVpn() {
         saveInputs()
         if (vpnRunning) { toast(tr("Приложение уже работает", "Already running")); return }
