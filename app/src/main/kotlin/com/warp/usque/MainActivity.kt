@@ -411,7 +411,7 @@ class MainActivity : Activity() {
         val profileCard = card()
         val profileBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(10)) }
         profileSpinner = Spinner(this).apply { background = round(surface2, dp(16), outline); setPadding(dp(10), 0, dp(10), 0) }
-        profileNameInput = input(tr("Название профиля", "Profile Name"), tr("Например：Yandex 443 / Cloudflare 8443", "e.g. Yandex 443 / Cloudflare 8443"))
+        profileNameInput = input(tr("Название профиля", "Profile Name"), tr("Например：apteka.ru 443 / apteka.ru 8443", "e.g. apteka.ru 443 / apteka.ru 8443"))
         saveNewProfileBtn = secondaryButton(tr("Сохранить как новый", "Save as New"))
         overwriteProfileBtn = secondaryButton(tr("Перезаписать текущий", "Overwrite Current"))
         deleteProfileBtn = secondaryButton(tr("Удалить выбранный профиль", "Delete Profile"))
@@ -542,7 +542,7 @@ class MainActivity : Activity() {
         content.addView(sectionTitle(tr("Текущие параметры подключения", "Current Connection")))
         val config = card()
         val configBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(8)) }
-        sniInput = input("SNI", "my.mail.ru")
+        sniInput = input("SNI", "apteka.ru")
         endpointInput = input("Endpoint IP", "162.159.198.2")
         portInput = input("Connect Port", "443")
         defaultBtn = secondaryButton(tr("Загрузить endpoint по умолчанию", "Load Default Endpoint"))
@@ -738,12 +738,12 @@ class MainActivity : Activity() {
             val arr = JSONArray(raw)
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
-                profiles[o.getString("name")] = Triple(o.optString("sni", "my.mail.ru"), o.optString("endpoint", "162.159.198.2"), o.optInt("port", 443))
+                profiles[o.getString("name")] = Triple(o.optString("sni", "apteka.ru"), o.optString("endpoint", "162.159.198.2"), o.optInt("port", 443))
             }
         }
         if (profiles.isEmpty()) {
-            profiles["По умолчанию 443"] = Triple("my.mail.ru", "162.159.198.2", 443)
-            profiles["Альтернативный 8443"] = Triple("my.mail.ru", "162.159.198.2", 8443)
+            profiles["По умолчанию 443"] = Triple("apteka.ru", "162.159.198.2", 443)
+            profiles["Альтернативный 8443"] = Triple("apteka.ru", "162.159.198.2", 8443)
             persistProfiles()
         }
         refreshProfileSpinner()
@@ -832,14 +832,14 @@ class MainActivity : Activity() {
     private fun saveAsNewProfile() {
         val base = profileNameInput.text?.toString().orEmpty().trim().ifBlank { normalizedEndpoint() }
         val name = uniqueProfileName(base)
-        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "my.mail.ru" }, normalizedEndpointHost(), normalizedPort())
+        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "apteka.ru" }, normalizedEndpointHost(), normalizedPort())
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name); toast(tr("Сохранено как новый профиль: $name", "Saved as new profile: $name"))
     }
     private fun overwriteSelectedProfile() {
         val selected = selectedProfileName()
         val name = selected.ifBlank { profileNameInput.text?.toString().orEmpty().trim() }
         if (name.isBlank()) return toast(tr("Сначала выберите профиль", "Select a profile first"))
-        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "my.mail.ru" }, normalizedEndpointHost(), normalizedPort())
+        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "apteka.ru" }, normalizedEndpointHost(), normalizedPort())
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name)
         if (currentProfileName() == name) { setCurrentProfileName(name); refreshHomeProfileSpinner(); updateCurrentProfileUi() }
         toast(tr("Текущий профиль перезаписан：$name", "Current profile overwritten: $name"))
@@ -873,7 +873,7 @@ class MainActivity : Activity() {
         val saved = prefs.getString("endpoint", "162.159.198.2:443") ?: "162.159.198.2:443"
         endpointInput.setText(parseEndpointHost(saved))
         portInput.setText(prefs.getInt("connectPort", parseEndpointPort(saved, 443)).toString())
-        sniInput.setText(prefs.getString("sni", "my.mail.ru") ?: "my.mail.ru")
+        sniInput.setText(prefs.getString("sni", "apteka.ru") ?: "apteka.ru")
         selectedPackages.clear(); selectedPackages.addAll(prefs.getStringSet("selectedPackages", emptySet()) ?: emptySet())
         splitModeSwitch.isChecked = prefs.getBoolean("splitMode", false)
         useHttp2Switch.isChecked = prefs.getBoolean("useHttp2", false)
@@ -1005,17 +1005,21 @@ class MainActivity : Activity() {
         val newStatusText = "${tr("Статус", "Status")}: $state${if (extra.isNotBlank()) " · $extra" else ""}"
         if (statusText.text != newStatusText) statusText.text = newStatusText
         val newColor = if (vpnRunning && tunnelReallyConnected) green else onPrimary
-        statusBanner.setTextColor(newColor) // цвет всегда дешёвая операция, можно не проверять
+        if (statusBanner.getCurrentTextColor() != newColor) statusBanner.setTextColor(newColor) // цвет всегда дешёвая операция, можно не проверять
         val newBtnText = if (vpnRunning) tr("Отключить VPN", "Disconnect VPN") else tr("Подключить VPN", "Connect VPN")
         if (connectButton.text != newBtnText) connectButton.text = newBtnText        
         val dark = android.content.res.ColorStateList.valueOf(darkAccent)
-        connectButton.backgroundTintList = dark
-        connectButton.setTextColor(Color.WHITE)
+        if (connectButton.backgroundTintList != dark) connectButton.backgroundTintList = dark
+        if (connectButton.getCurrentTextColor() != Color.WHITE) connectButton.setTextColor(Color.WHITE)
         if (::languageRuButton.isInitialized) {
-            languageRuButton.backgroundTintList = android.content.res.ColorStateList.valueOf(if (!useEnglish) darkAccent else primary)
-            languageEnButton.backgroundTintList = android.content.res.ColorStateList.valueOf(if (useEnglish) darkAccent else primary)
-            languageRuButton.setTextColor(if (!useEnglish) Color.WHITE else onPrimary)
-            languageEnButton.setTextColor(if (useEnglish) Color.WHITE else onPrimary)
+            val newRuTintList = android.content.res.ColorStateList.valueOf(if (!useEnglish) darkAccent else primary)
+            languageRuButton.backgroundTintList = newRuTintList
+            val newEnTintList = android.content.res.ColorStateList.valueOf(if (useEnglish) darkAccent else primary)
+            languageEnButton.backgroundTintList = newEnTintList
+            val newRuColor = if (!useEnglish) Color.WHITE else onPrimary
+            if (languageRuButton.getCurrentTextColor() != newRuColor) languageRuButton.setTextColor(newRuColor)
+            val newEnColor = if (useEnglish) Color.WHITE else onPrimary
+            if (languageEnButton.getCurrentTextColor() != newEnColor) languageEnButton.setTextColor(newEnColor)
         }
         updateConfigState(extra)
     }
@@ -1224,7 +1228,7 @@ class MainActivity : Activity() {
     }
 
     private fun startTunnelNow() {
-        val sni = sniInput.text?.toString().orEmpty().ifBlank { "my.mail.ru" }
+        val sni = sniInput.text?.toString().orEmpty().ifBlank { "apteka.ru" }
         val endpoint = "${normalizedEndpointHost()}:${normalizedPort()}"
         val splitMode = splitModeSwitch.isChecked
         val useHttp2 = useHttp2Switch.isChecked
@@ -1348,7 +1352,7 @@ class MainActivity : Activity() {
                 
                 put("endpoint", selectedIp.trim().ifBlank { "162.159.198.2" })
                 put("port", selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443)
-                put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/").ifBlank { "my.mail.ru" })
+                put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/").ifBlank { "apteka.ru" })
             }
             
             configFile.writeText(finalConfig.toString(2))
