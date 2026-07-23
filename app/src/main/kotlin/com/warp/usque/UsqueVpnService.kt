@@ -85,7 +85,7 @@ class UsqueVpnService : VpnService() {
         return Service.START_STICKY
     }
 
-    private fun startNativeTunnel(...) {
+    private fun startNativeTunnel(configPath: String, sni: String, endpoint: String, splitMode: Boolean, useHttp2: Boolean, allowedApps: ArrayList<String>) {
         try {
             manualStop.set(false)
             running.set(true)
