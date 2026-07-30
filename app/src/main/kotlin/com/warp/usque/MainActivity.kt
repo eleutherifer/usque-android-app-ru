@@ -276,7 +276,7 @@ class MainActivity : Activity() {
         showIndex(0)
 
         defaultBtn.setOnClickListener {
-            val defaultEndpoint = Usqueandroid.getDefaultEndpoint(configFile.absolutePath)
+            val defaultEndpoint = Usqueandroid.getDefaultEndpoint(configFile.absolutePath, useHttp2Switch.isChecked)
             endpointInput.setText(parseEndpointHost(defaultEndpoint))
             portInput.setText(parseEndpointPort(defaultEndpoint, 443).toString())
             refreshState(tr("Загружен endpoint по умолчанию", "Default endpoint loaded"))
@@ -742,8 +742,12 @@ class MainActivity : Activity() {
             }
         }
         if (profiles.isEmpty()) {
-            profiles["По умолчанию 443"] = Triple("cdnjs.cloudflare.com", "162.159.198.2", 443)
-            profiles["Альтернативный 8443"] = Triple("cdnjs.cloudflare.com", "162.159.198.2", 8443)
+            profiles["cdnjs.cloudflare.com:443:162.159.198.2 (FI)"] = Triple("cdnjs.cloudflare.com", "162.159.198.2", 443)
+            profiles["cdnjs.cloudflare.com:443:162.159.199.2 (RU)"] = Triple("cdnjs.cloudflare.com", "162.159.199.2", 443)
+            profiles["apteka.ru:443:162.159.198.2 (FI)"] = Triple("apteka.ru", "162.159.198.2", 443)
+            profiles["apteka.ru:443:162.159.199.2 (RU)"] = Triple("apteka.ru", "162.159.199.2", 443)
+            profiles["my.mail.ru:443:162.159.198.2 (FI)"] = Triple("my.mail.ru", "162.159.198.2", 443)
+            profiles["my.mail.ru:443:162.159.199.2 (RU)"] = Triple("my.mail.ru", "162.159.199.2", 443)
             persistProfiles()
         }
         refreshProfileSpinner()
