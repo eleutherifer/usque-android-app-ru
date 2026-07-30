@@ -47,6 +47,7 @@ import java.util.concurrent.Executors
 class MainActivity : Activity() {
     companion object { private const val REQ_VPN = 1001 }
     data class AppEntry(val label: String, val packageName: String)
+    data class Profile(val sni: String, val endpoint: String, val port: Int, val http2: Boolean)
 
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executors.newSingleThreadExecutor()
@@ -141,7 +142,7 @@ class MainActivity : Activity() {
             handler.postDelayed(this, 1000)
         }
     }
-    private val profiles = linkedMapOf<String, Triple<String, String, Int>>()
+    private val profiles = linkedMapOf<String, Profile>()
     private val allApps = mutableListOf<AppEntry>()
     private val selectedPackages = linkedSetOf<String>()
 
@@ -372,17 +373,17 @@ class MainActivity : Activity() {
                 markDirty(); saveSelectedApps(); updateModeUi(); refreshAppList()
             }
         }
-        useHttp2Switch = MaterialSwitch(this).apply {
+/*        useHttp2Switch = MaterialSwitch(this).apply {
             text = tr("HTTP/2 вместо QUIC (обход блокировки UDP)", "HTTP/2 instead of QUIC (bypass UDP blocking)")
             textSize = 16f
             setTextColor(textColor)
             setPadding(0, dp(6), 0, 0)
             setOnCheckedChangeListener { _, _ -> markDirty(); saveInputs() }
-        }
+        }*/
         modeBox.addView(modeValue)
         modeBox.addView(modeHint)
         modeBox.addView(splitModeSwitch)
-        modeBox.addView(useHttp2Switch)
+//        modeBox.addView(useHttp2Switch)
         modeCard.addView(modeBox)
         content.addView(modeCard)
        
@@ -545,10 +546,18 @@ class MainActivity : Activity() {
         sniInput = input("SNI", "cdnjs.cloudflare.com")
         endpointInput = input("Endpoint IP", "162.159.198.2")
         portInput = input("Connect Port", "443")
+        useHttp2Switch = MaterialSwitch(this).apply {
+            text = tr("HTTP/2 вместо QUIC (обход блокировки UDP)", "HTTP/2 instead of QUIC (bypass UDP blocking)")
+            textSize = 16f
+            setTextColor(textColor)
+            setPadding(0, dp(6), 0, 0)
+            setOnCheckedChangeListener { _, _ -> markDirty() }
+        }
         defaultBtn = secondaryButton(tr("Загрузить endpoint по умолчанию", "Load Default Endpoint"))
         configBox.addView(compactInputWrap("SNI", sniInput))
         configBox.addView(compactInputWrap("Endpoint IP", endpointInput))
         configBox.addView(compactInputWrap("Connect Port", portInput))
+        configBox.addView(useHttp2Switch, LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(4) })
         configBox.addView(defaultBtn, LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(3) })
         config.addView(configBox)
         content.addView(config)
@@ -738,16 +747,21 @@ class MainActivity : Activity() {
             val arr = JSONArray(raw)
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
-                profiles[o.getString("name")] = Triple(o.optString("sni", "cdnjs.cloudflare.com"), o.optString("endpoint", "162.159.198.2"), o.optInt("port", 443))
+                profiles[o.getString("name")] = Profile(
+                    o.optString("sni", "cdnjs.cloudflare.com"),
+                    o.optString("endpoint", "162.159.198.2"),
+                    o.optInt("port", 443),
+                    o.optBoolean("http2", false)  // у старых профилей в JSON этого поля нет — optBoolean тихо даст false, ничего не сломается
+                )
             }
         }
         if (profiles.isEmpty()) {
-            profiles["cdnjs.cloudflare.com:443:162.159.198.2 (FI)"] = Triple("cdnjs.cloudflare.com", "162.159.198.2", 443)
-            profiles["cdnjs.cloudflare.com:443:162.159.199.2 (RU)"] = Triple("cdnjs.cloudflare.com", "162.159.199.2", 443)
-            profiles["apteka.ru:443:162.159.198.2 (FI)"] = Triple("apteka.ru", "162.159.198.2", 443)
-            profiles["apteka.ru:443:162.159.199.2 (RU)"] = Triple("apteka.ru", "162.159.199.2", 443)
-            profiles["my.mail.ru:443:162.159.198.2 (FI)"] = Triple("my.mail.ru", "162.159.198.2", 443)
-            profiles["my.mail.ru:443:162.159.199.2 (RU)"] = Triple("my.mail.ru", "162.159.199.2", 443)
+            profiles["cdnjs.cloudflare.com:443:162.159.198.2 (FI)"] = Profile("cdnjs.cloudflare.com", "162.159.198.2", 443, false)
+            profiles["cdnjs.cloudflare.com:443:162.159.199.2 (RU)"] = Profile("cdnjs.cloudflare.com", "162.159.199.2", 443, false)
+            profiles["apteka.ru:443:162.159.198.2 (FI)"] = Profile("apteka.ru", "162.159.198.2", 443, false)
+            profiles["apteka.ru:443:162.159.199.2 (RU)"] = Profile("apteka.ru", "162.159.199.2", 443, false)
+            profiles["my.mail.ru:443:162.159.198.2 (FI)"] = Profile("my.mail.ru", "162.159.198.2", 443, false)
+            profiles["my.mail.ru:443:162.159.199.2 (RU)"] = Profile("my.mail.ru", "162.159.199.2", 443, false)
             persistProfiles()
         }
         refreshProfileSpinner()
@@ -755,7 +769,7 @@ class MainActivity : Activity() {
     private fun persistProfiles() {
         val arr = JSONArray()
         profiles.forEach { (name, v) ->
-            arr.put(JSONObject().put("name", name).put("sni", v.first).put("endpoint", v.second).put("port", v.third))
+            arr.put(JSONObject().put("name", name).put("sni", v.sni).put("endpoint", v.endpoint).put("port", v.port).put("http2", v.http2))
         }
         prefs.edit().putString("profilesJson", arr.toString()).apply()
     }
@@ -801,7 +815,8 @@ class MainActivity : Activity() {
         val name = currentProfileName().takeIf { it.isNotBlank() } ?: profiles.keys.firstOrNull().orEmpty()
         val p = profiles[name]
         currentProfileText.text = if (p != null) {
-            tr("Текущий профиль：$name · SNI ${p.first} · ${p.second}:${p.third}", "Current: $name · SNI ${p.first} · ${p.second}:${p.third}")
+            val mode = if (p.http2) "HTTP/2" else "QUIC"
+            tr("Текущий профиль：$name · SNI ${p.sni} · ${p.endpoint}:${p.port} · $mode", "Current: $name · SNI ${p.sni} · ${p.endpoint}:${p.port} · $mode")
         } else {
             tr("Текущий профиль: не выбран", "Current profile: none")
         }
@@ -827,23 +842,24 @@ class MainActivity : Activity() {
     }
     private fun applyProfileToInputs(name: String, persist: Boolean) {
         val p = profiles[name] ?: return
-        sniInput.setText(p.first)
-        endpointInput.setText(p.second)
-        portInput.setText(p.third.toString())
+        sniInput.setText(p.sni)
+        endpointInput.setText(p.endpoint)
+        portInput.setText(p.port.toString())
+        useHttp2Switch.isChecked = p.http2
         profileNameInput.setText(name)
         if (persist) { markDirty(); saveInputs() }
     }
     private fun saveAsNewProfile() {
         val base = profileNameInput.text?.toString().orEmpty().trim().ifBlank { normalizedEndpoint() }
         val name = uniqueProfileName(base)
-        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "cdnjs.cloudflare.com" }, normalizedEndpointHost(), normalizedPort())
+        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "cdnjs.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), useHttp2Switch.isChecked)
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name); toast(tr("Сохранено как новый профиль: $name", "Saved as new profile: $name"))
     }
     private fun overwriteSelectedProfile() {
         val selected = selectedProfileName()
         val name = selected.ifBlank { profileNameInput.text?.toString().orEmpty().trim() }
         if (name.isBlank()) return toast(tr("Сначала выберите профиль", "Select a profile first"))
-        profiles[name] = Triple(sniInput.text?.toString().orEmpty().ifBlank { "cdnjs.cloudflare.com" }, normalizedEndpointHost(), normalizedPort())
+        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "cdnjs.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), useHttp2Switch.isChecked)
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name)
         if (currentProfileName() == name) { setCurrentProfileName(name); refreshHomeProfileSpinner(); updateCurrentProfileUi() }
         toast(tr("Текущий профиль перезаписан：$name", "Current profile overwritten: $name"))
