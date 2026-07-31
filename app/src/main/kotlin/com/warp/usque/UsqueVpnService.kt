@@ -229,7 +229,7 @@ class UsqueVpnService : VpnService() {
             .getOrDefault("")
             .ifBlank { "172.16.0.2" }
     }
-
+/*
     private fun stopVpn(reason: String = "stop") {
         if (!stopping.compareAndSet(false, true)) {
 //            Log.i(TAG, "stopVpn($reason) skipped — уже останавливается")
@@ -255,7 +255,24 @@ class UsqueVpnService : VpnService() {
             stopping.set(false)
         }
     }
-
+*/
+    private fun stopVpn(reason: String = "stop") {
+        if (!stopping.compareAndSet(false, true)) { return }
+        try {
+            manualStop.set(true)
+            running.set(false)
+            runCatching { Usqueandroid.stopTunnel() }
+            // Дескриптор больше НЕ закрываем здесь: теперь этим надёжно занимается
+            // сама Go-сторона (tunDevice.Close() внутри неё), и делает это правильно —
+            // синхронно, в момент, когда действительно перестаёт им пользоваться.
+            // Если закрыть его тут же — образуется многосекундное окно, в которое
+            // номер дескриптора успевает достаться чему-то другому, и когда Go
+            // спустя 3-4 секунды дойдёт до своего закрытия — закроет уже чужое.
+            tun = null
+            detachedTunFd = -1
+        } finally { stopping.set(false) }
+    }
+    
     private fun fileDescriptorFromInt(fdInt: Int): FileDescriptor {
         val fd = FileDescriptor()
         val field = FileDescriptor::class.java.getDeclaredField("descriptor")
