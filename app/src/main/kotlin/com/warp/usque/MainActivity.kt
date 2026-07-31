@@ -1281,11 +1281,19 @@ class MainActivity : Activity() {
         resetSpeedMeter()
         UsqueVpnService.stopActiveTunnel()
         runCatching { startService(Intent(this, UsqueVpnService::class.java).setAction(UsqueVpnService.ACTION_STOP)) }
-        handler.postDelayed({ 
+
+        // Это только обновляет текст на экране побыстрее — саму защиту (tunnelStopping) НЕ трогает.
+        handler.postDelayed({
             runCatching { stopService(Intent(this, UsqueVpnService::class.java)) }
-            tunnelStopping = false
-            onTunnelStopped(tr("Остановлено", "Stopped")) 
+            onTunnelStopped(tr("Остановлено", "Stopped"))
         }, 500)
+
+        // А это — подстраховка на крайний случай, если настоящий сигнал "disconnected"
+        // почему-то вообще не придёт. 8 секунд — заведомо больше, чем реально нужно
+        // туннелю на закрытие, поэтому в норме этот таймер никогда не успевает
+        // сработать первым — снятие защиты происходит по настоящему сигналу
+        // (в блоке stateListener, "disconnected" → tunnelStopping = false).
+        handler.postDelayed({ tunnelStopping = false }, 8000)
     }
 
     private fun onTunnelStopped(msg: String) { vpnRunning = false; refreshState(msg); log(msg) }
