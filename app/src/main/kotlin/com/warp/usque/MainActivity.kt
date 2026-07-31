@@ -89,6 +89,7 @@ class MainActivity : Activity() {
     private lateinit var clearAllAppsBtn: MaterialButton
 
     private var useEnglish = false
+    private var tunnelStopping = false
     private var vpnRunning = false
     private var vpnGranted = false
     private var configDirty = false
@@ -121,6 +122,7 @@ class MainActivity : Activity() {
                     "disconnected" -> {
                         vpnRunning = false
                         tunnelReallyConnected = false
+                        tunnelStopping = false
                         refreshState(tr("Остановлено", "Stopped"))
                     }
                 }
@@ -557,7 +559,7 @@ class MainActivity : Activity() {
         configBox.addView(compactInputWrap("SNI", sniInput))
         configBox.addView(compactInputWrap("Endpoint IP", endpointInput))
         configBox.addView(compactInputWrap("Connect Port", portInput))
-        configBox.addView(useHttp2Switch, LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(4) })
+        configBox.addView(useHttp2Switch, LinearLayout.LayoutParams(-1, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(4) })
         configBox.addView(defaultBtn, LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(3) })
         config.addView(configBox)
         content.addView(config)
@@ -1047,6 +1049,7 @@ class MainActivity : Activity() {
     private fun connectVpn() {
         saveInputs()
         if (vpnRunning) { toast(tr("Приложение уже работает", "Already running")); return }
+        if (tunnelStopping) { toast(tr("Подождите, предыдущее соединение ещё останавливается", "Please wait, previous connection is still stopping")); return }
         if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { toast(tr("Выберите хотя бы одно приложение", "Select at least one app")); log(tr("Выберите хотя бы одно приложение перед подлючением в раздельном режиме", "Select at least one app before connecting in split mode")); refreshState("Приложение не выбрано"); return }
         if (!hasValidRegistration()) {
             log(tr("Не найдена действительная регистрация. Автоматическая регистрация…", "No valid registration found. Registering automatically…"))
@@ -1273,12 +1276,14 @@ class MainActivity : Activity() {
     private fun disconnectVpn() {
         log(tr("Остановка службы VPN...", "Stopping VPN service…"))
         vpnRunning = false
+        tunnelStopping = true
         refreshState(tr("Остановка", "Stopping"))
         resetSpeedMeter()
         UsqueVpnService.stopActiveTunnel()
         runCatching { startService(Intent(this, UsqueVpnService::class.java).setAction(UsqueVpnService.ACTION_STOP)) }
         handler.postDelayed({ 
             runCatching { stopService(Intent(this, UsqueVpnService::class.java)) }
+            tunnelStopping = false
             onTunnelStopped(tr("Остановлено", "Stopped")) 
         }, 500)
     }
