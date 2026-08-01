@@ -1,12 +1,10 @@
 package com.warp.usque
 
 import android.app.Activity
-//import android.content.BroadcastReceiver
 import android.content.ClipboardManager
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
-//import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
@@ -41,7 +39,6 @@ import java.io.File
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
-//import java.nio.charset.Charsets
 import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
@@ -105,7 +102,6 @@ class MainActivity : Activity() {
 
     private var tunnelReallyConnected = false
 
-// 2026.07.19 TEST ТЕСТ Функции onStart(), onStop() закомментированы для проверки
     override fun onStart() {
         super.onStart()
         UsqueVpnService.stateListener = { state, message ->
@@ -243,18 +239,12 @@ class MainActivity : Activity() {
         val configTab = tabButton(tr("Настройки", "Config"))
         val appsTab = tabButton(tr("Приложения", "Apps"))
         val tabsList = listOf(overviewTab, configTab, appsTab)
-/*
-        tabsList.forEachIndexed { index, b ->
-            tabs.addView(b, LinearLayout.LayoutParams(0, dp(36), 1f).apply { if (index < 2) rightMargin = dp(8) })
-        }
-*/
         tabsList.forEachIndexed { index, b ->
             // ИСПРАВЛЕНО: Уменьшаем внутренние боковые отступы до 4dp, чтобы длинные русские слова влезли целиком
             b.setPadding(dp(4), b.paddingTop, dp(4), b.paddingBottom)
             
             tabs.addView(b, LinearLayout.LayoutParams(0, dp(36), 1f).apply { if (index < 2) rightMargin = dp(8) })
         }
-
 
         val homePage = buildHomePage()
         val configPage = buildConfigPage()
@@ -375,17 +365,9 @@ class MainActivity : Activity() {
                 markDirty(); saveSelectedApps(); updateModeUi(); refreshAppList()
             }
         }
-/*        useHttp2Switch = MaterialSwitch(this).apply {
-            text = tr("HTTP/2 вместо QUIC (обход блокировки UDP)", "HTTP/2 instead of QUIC (bypass UDP blocking)")
-            textSize = 16f
-            setTextColor(textColor)
-            setPadding(0, dp(6), 0, 0)
-            setOnCheckedChangeListener { _, _ -> markDirty(); saveInputs() }
-        }*/
         modeBox.addView(modeValue)
         modeBox.addView(modeHint)
         modeBox.addView(splitModeSwitch)
-//        modeBox.addView(useHttp2Switch)
         modeCard.addView(modeBox)
         content.addView(modeCard)
        
@@ -419,50 +401,6 @@ class MainActivity : Activity() {
         overwriteProfileBtn = secondaryButton(tr("Перезаписать текущий", "Overwrite Current"))
         deleteProfileBtn = secondaryButton(tr("Удалить выбранный профиль", "Delete Profile"))
 
-/*
-        // 🛠️ ИСПРАВЛЕНИЕ: Настраиваем отображение текста для ВСЕХ трех кнопок управления профилями
-        val profileButtonsList = listOf(saveNewProfileBtn, overwriteProfileBtn, deleteProfileBtn)
-        profileButtonsList.forEach { btn ->
-            btn.isSingleLine = false         // Разрешаем перенос на новую строку
-            btn.maxLines = 2                 // Ограничиваем максимум двумя строками
-            btn.isAllCaps = false            // Отключаем принудительный Caps Lock
-            btn.ellipsize = null
-            
-            // Уменьшаем отступы со всех сторон, чтобы двухстрочный текст сидел плотно
-            btn.setPadding(dp(4), dp(2), dp(4), dp(2))
-            
-            // Отключаем встроенную минимальную высоту MaterialButton (чтобы кнопки не раздувались)
-  
-//            btn.minHeight = 0
-//            btn.minimumHeight = 0
-        }
-
-        exportConfigBtn = secondaryButton(tr("Экспорт всего конфига", "Export entire config"))
-        importConfigBtn = secondaryButton(tr("Импорт конфига из буфера", "Import config from buffer"))
-        profileBox.addView(TextView(this).apply { text = tr("Профили настроек", "Profiles"); textSize = 18f; setTextColor(textColor); setTypeface(null, Typeface.BOLD) })
-        profileBox.addView(TextView(this).apply { text = tr("Сохранить текущие SNI / Endpoint / Port для быстрого переключения.", "Save current SNI / Endpoint / Port for quick switching."); textSize = 12f; setTextColor(subText); setPadding(0, dp(2), 0, dp(6)) })
-        profileBox.addView(profileSpinner, LinearLayout.LayoutParams(-1, dp(42)))
-        profileBox.addView(inputWrap(tr("Название профиля", "Profile Name"), profileNameInput), LinearLayout.LayoutParams(-1, dp(70)).apply { topMargin = dp(5) })
-
-        // Создаем горизонтальный контейнер для первых двух кнопок с автоматической высотой
-        val profileActions = LinearLayout(this).apply { 
-            orientation = LinearLayout.HORIZONTAL 
-        }
-        
-        // Добавляем кнопки «Перезаписать» и «Сохранить как новый» с высотой WRAP_CONTENT
-        profileActions.addView(overwriteProfileBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { 
-            rightMargin = dp(8) 
-        })
-        profileActions.addView(saveNewProfileBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        
-        // Добавляем горизонтальный контейнер в основной блок
-        profileBox.addView(profileActions, LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT))
-        
-        // Возвращаем кнопку «Удалить выбранный профиль» на экран с автоматической высотой
-        profileBox.addView(deleteProfileBtn, LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT).apply { 
-            topMargin = dp(8) 
-        })
-*/
         // 🛠️ ИСПРАВЛЕНИЕ: Разделяем настройку парных кнопок и кнопки удаления
         
         // Настройка для верхних горизонтальных кнопок (сжимаем их, чтобы поместились в ряд)
@@ -473,23 +411,7 @@ class MainActivity : Activity() {
             btn.isAllCaps = false
             btn.ellipsize = null
             btn.setPadding(dp(4), dp(2), dp(4), dp(2))
-//            btn.minHeight = 0
-//            btn.minimumHeight = 0
         }
-/*
-        // Настройка для нижней одиночной кнопки удаления (возвращаем стандартную комфортную высоту)
-        deleteProfileBtn.apply {
-            isSingleLine = false
-            maxLines = 2
-            isAllCaps = false
-            ellipsize = null
-            // Даем полноценные вертикальные отступы по 10dp, чтобы кнопка стала стандартной высоты
-            setPadding(dp(12), dp(10), dp(12), dp(10))
-            // Задаем комфортную минимальную высоту для нажатия пальцем
-            minHeight = dp(40)
-            minimumHeight = dp(40)
-        }
-*/
 
         exportConfigBtn = secondaryButton(tr("Экспорт всего конфига в буфер", "Export entire config to buffer"))
         importConfigBtn = secondaryButton(tr("Импорт конфига из буфера", "Import config from buffer"))
@@ -528,7 +450,6 @@ class MainActivity : Activity() {
             topMargin = dp(10) // Увеличили отступ сверху для визуального разделения блоков
         })
 
-
         val backupActions = LinearLayout(this).apply { 
             orientation = LinearLayout.HORIZONTAL 
             isBaselineAligned = false
@@ -536,8 +457,6 @@ class MainActivity : Activity() {
         backupActions.addView(exportConfigBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(8) })
         backupActions.addView(importConfigBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         profileBox.addView(backupActions, LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
-
-
 
         profileCard.addView(profileBox)
         content.addView(profileCard)
@@ -638,12 +557,12 @@ class MainActivity : Activity() {
         strokeWidth = 0
         elevation = dp(1).toFloat()
 
-        // 🛠️ ИСПРАВЛЕНИЕ: Разрешаем многострочность
+        // ИСПРАВЛЕНИЕ: Разрешаем многострочность
         isSingleLine = false
         maxLines = 2
         ellipsize = null
 
-        // 🛠️ ИСПРАВЛЕНИЕ: Уменьшаем внутренние боковые отступы до 4dp (по аналогии с вкладками)
+        // ИСПРАВЛЕНИЕ: Уменьшаем внутренние боковые отступы до 4dp (по аналогии с вкладками)
         setPadding(dp(4), paddingTop, dp(4), paddingBottom)
     }
     private fun sectionTitle(s: String) = TextView(this).apply {
@@ -1064,7 +983,7 @@ class MainActivity : Activity() {
                             log(tr("Зарегистрировано. Запрашивается разрешение на использование VPN…", "Registered. Requesting VPN permission…")); 
                             requestVpnAndStart() 
                         } else { 
-                            log("Регистрация не удалась: ${result.ifNullOrBlank(tr("Неизвестная ошибка", "Unknown error"))}"); 
+                            log(tr("Регистрация не удалась: ${result.ifNullOrBlank("Неизвестная ошибка")}", "Registration failed: ${result.ifNullOrBlank("Unknown error")}")); 
                             refreshState(tr("Регистрация не удалась", "Registration failed")) 
                         }
                     }
@@ -1074,176 +993,6 @@ class MainActivity : Activity() {
         }
         requestVpnAndStart()
     }
-
-/*
-    private fun connectVpn() {
-        saveInputs()
-        if (vpnRunning) { toast("Приложение уже работает"); return }
-        if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { 
-            toast("Выберите хотя бы одно приложение")
-            log("В режиме раздельного туннелирования нужно выбрать приложения перед подключением")
-            refreshState("Приложения не выбраны")
-            return 
-        }
-        
-        if (!hasValidRegistration()) {
-            log("Регистрация нового MASQUE профиля через Яндекс...")
-            val selectedIp = normalizedEndpointHost()
-            val selectedPort = normalizedPort().toString()
-            
-            fetchKeysFromWorkerProxy(this, selectedIp, selectedPort)
-            return
-        }
-        requestVpnAndStart()
-    }
-*/
-/*
-    private fun connectVpn() {
-        saveInputs()
-        if (vpnRunning) { toast(tr("Приложение уже работает", "Already running")); return }
-        if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { 
-            toast(tr("Выберите хотя бы одно приложение", "Select at least one app"))
-            log(tr("Выберите хотя бы одно приложение перед подлючением в раздельном режиме", "Select at least one app before connecting in split mode"))
-            refreshState("Приложение не выбрано")
-            return 
-        }
-        
-        // Возвращаем официальную встроенную регистрацию через Go-библиотеку
-        if (!hasValidRegistration()) {
-            log(tr("Не найдена действительная регистрация. Автоматическая регистрация…", "No valid registration found. Registering automatically…"))
-            executor.execute {
-                try {
-                    deleteInvalidConfigIfNeeded()
-                    
-                    // Вызов нативного метода Go (из usque_android.go, строка 66)
-                    val result = Usqueandroid.register(configFile.absolutePath, "Android")
-                    
-                    handler.post {
-                        if (result.isNullOrBlank() && hasValidRegistration()) { 
-                            log(tr("Зарегистрировано. Запрашивается разрешение на использование VPN…", "Registered. Requesting VPN permission…"))
-                            requestVpnAndStart() 
-                        } else { 
-                            log("Регистрация не удалась: ${result.ifNullOrBlank(tr("Неизвестная ошибка", "Unknown error"))}")
-                            refreshState(tr("Registration failed", "Регистрация не удалась")) 
-                        }
-                    }
-                } catch (e: Exception) { 
-                    handler.post { 
-                        log("Ошибка регистрации: ${e.message ?: e.javaClass.simpleName}")
-                        refreshState(tr("Ошибка регистрации", "Registration error")) 
-
-
-                        log("Регистрация нового MASQUE профиля через Cloudflare Worker...")
-                        val selectedIp = normalizedEndpointHost()
-                        val selectedPort = normalizedPort().toString()
-            
-                        // ВОТ ЗДЕСЬ ПРОИСХОДИТ ОБРАЩЕНИЕ К ВОРКЕРУ:
-                        fetchKeysFromWorkerProxy(this, selectedIp, selectedPort)
-
-
-                    } 
-                }
-            }
-            return
-        }
-        requestVpnAndStart()
-    }
-*/
-/*
-    private fun connectVpn() {
-        saveInputs()
-        if (vpnRunning) { toast("Приложение уже работает"); return }
-        if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { 
-            toast("Выберите хотя бы одно приложение")
-            log("В режиме раздельного туннелирования нужно выбрать приложения перед подключением")
-            refreshState("Приложения не выбраны")
-            return 
-        }
-        
-        // Если регистрации нет — отправляем запрос на ваш Cloudflare Worker
-        if (!hasValidRegistration()) {
-            log("Регистрация нового MASQUE профиля через Cloudflare Worker...")
-            val selectedIp = normalizedEndpointHost()
-            val selectedPort = normalizedPort().toString()
-            
-            // ВОТ ЗДЕСЬ ПРОИСХОДИТ ОБРАЩЕНИЕ К ВОРКЕРУ:
-            fetchKeysFromWorkerProxy(this, selectedIp, selectedPort)
-            return
-        }
-        requestVpnAndStart()
-    }
-*/
-
-/*
-    private fun connectVpn() {
-        saveInputs()
-        if (vpnRunning) { toast(tr("Приложение уже работает", "Already running")); return }
-        if (splitModeSwitch.isChecked && selectedPackages.isEmpty()) { 
-            toast(tr("Выберите хотя бы одно приложение", "Select at least one app"))
-            log(tr("Выберите хотя бы одно приложение перед подлючением в раздельном режиме", "Select at least one app before connecting in split mode"))
-            refreshState("Приложение не выбрано")
-            return 
-        }
-        
-        if (!hasValidRegistration()) {
-            log(tr("Не найдена действительная регистрация. Автоматическая регистрация…", "No valid registration found. Registering automatically…"))
-            executor.execute {
-                try {
-                    deleteInvalidConfigIfNeeded()
-                    
-                    // 1. Попытка официальной регистрации через нативный Go
-                    val result = Usqueandroid.register(configFile.absolutePath, "Android")
-                    
-                    handler.post {
-                        if (result.isNullOrBlank() && hasValidRegistration()) { 
-                            log(tr("Зарегистрировано. Запрашивается разрешение на использование VPN…", "Registered. Requesting VPN permission…"))
-                            
-//                            // ИСПРАВЛЕНИЕ: Перезаписываем IP-адрес в созданном конфиге на тот, что выбран пользователем в UI
-//                            val selectedIp = normalizedEndpointHost()
-//                            val selectedPort = normalizedPort().toString()
-//                            saveFinalConfig(configFile.readText(), selectedIp, selectedPort)
-                            
-                            requestVpnAndStart() 
-                        } else { 
-                            log("Регистрация не удалась: ${result.ifNullOrBlank(tr("Неизвестная ошибка", "Unknown error"))}"); 
-                            refreshState(tr("Регистрация не удалась", "Registration failed")) 
-
-//                            // Если метод вернул ошибку, но исключения не было — тоже пробуем воркер
-//                            log("Нативная регистрация вернула ошибку: $result. Пробуем Cloudflare Worker...")
-//                            val selectedIp = normalizedEndpointHost()
-//                            val selectedPort = normalizedPort().toString()
-//                            fetchKeysFromWorkerProxy(this@MainActivity, selectedIp, selectedPort)
-                        }
-                    }
-                } catch (e: Exception) { 
-                    handler.post { 
-                        log("Ошибка встроенной регистрации: ${e.message ?: e.javaClass.simpleName}"); 
-                        refreshState(tr("Ошибка встроенной регистрации", "Registration error")) 
-
-//                        log("Ошибка встроенной регистрации: ${e.message ?: e.javaClass.simpleName}. Переключаемся на Cloudflare Worker...")
-//                        val selectedIp = normalizedEndpointHost()
-//                        val selectedPort = normalizedPort().toString()
-//            
-//                        // ИСПРАВЛЕНИЕ: Используем явный указатель на класс `this@MainActivity` вместо `this`
-//                        fetchKeysFromWorkerProxy(this@MainActivity, selectedIp, selectedPort)
-                    } 
-                }
-            }
-            return
-        }
-        
-//        // Если регистрация уже была создана ранее, перед стартом обновляем в ней IP/Порт из полей ввода
-//        val selectedIp = normalizedEndpointHost()
-//        val selectedPort = normalizedPort().toString()
-//        if (configFile.exists()) {
-//            saveFinalConfig(configFile.readText(), selectedIp, selectedPort)
-//        }
-        
-        requestVpnAndStart()
-    }
-*/
-
-
 
     private fun requestVpnAndStart() {
         val prepareIntent = VpnService.prepare(this)
@@ -1313,181 +1062,6 @@ class MainActivity : Activity() {
         else if (requestCode == REQ_VPN) toast(tr("Доступ к VPN не разрешен в системе", "VPN permission denied"))
     }
 
-/*
-    fun fetchKeysFromWorkerProxy(context: Context, userIp: String, userPort: String) {
-        Thread {
-            try {
-                val yandexBytes = intArrayOf(104, 116, 116, 112, 115, 58, 47, 47, 116, 114, 97, 110, 115, 108, 97, 116, 101, 46, 121, 97, 110, 100, 101, 120, 46, 114, 117, 47, 116, 114, 97, 110, 115, 108, 97, 116, 101, 63, 117, 114, 108, 61)
-                val yandexPart = yandexBytes.map { it.toChar() }.joinToString("")
-
-                val workerBytes = intArrayOf(104, 116, 116, 112, 115, 58, 47, 47, 109, 97, 115, 113, 117, 101, 45, 114, 101, 103, 46, 101, 108, 101, 117, 116, 104, 101, 114, 105, 102, 101, 114, 46, 119, 111, 114, 107, 101, 114, 115, 46, 100, 101, 118, 47)
-                val workerPart = workerBytes.map { it.toChar() }.joinToString("")
-
-                val langBytes = intArrayOf(38, 108, 97, 110, 103, 61, 100, 101, 45, 114, 117)
-                val langPart = langBytes.map { it.toChar() }.joinToString("")
-
-                val proxyUrl = yandexPart + workerPart + langPart
-                
-                val url = URL(proxyUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                connection.connectTimeout = 7000
-                connection.readTimeout = 7000
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-
-                val responseText = connection.inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
-
-                if (responseText.contains("{")) {
-                    val jsonStart = responseText.indexOf("{")
-                    val jsonEnd = responseText.lastIndexOf("}") + 1
-                    val rawJson = responseText.substring(jsonStart, jsonEnd)
-                    
-                    saveFinalConfig(rawJson, userIp, userPort)
-
-                    (context as Activity).runOnUiThread {
-                        Toast.makeText(context, "Регистрация успешна! Запуск...", Toast.LENGTH_SHORT).show()
-                        requestVpnAndStart()
-                    }
-                } else {
-                    (context as Activity).runOnUiThread {
-                        Toast.makeText(context, "Ошибка: Неверный ответ прокси", Toast.LENGTH_SHORT).show()
-                        this@MainActivity.refreshState("Ошибка данных")
-                    }
-                }
-            } catch (e: Exception) {
-                (context as Activity).runOnUiThread {
-                    android.util.Log.e("USQUE_REG", "Ошибка автоматической регистрации: ${e.message}")
-                    Toast.makeText(context, "Ошибка сети при регистрации", Toast.LENGTH_SHORT).show()
-                    this@MainActivity.refreshState("Ошибка сети")
-                }
-            }
-        }.start()
-    }
-*/
-
-/*
-    fun saveFinalConfig(serverResponseJson: String, selectedIp: String, selectedPort: String, selectedSni: String) {
-        try {
-            val cloudflareData = JSONObject(serverResponseJson)
-            
-            val rawIpv4 = cloudflareData.getString("client_ipv4")
-            val cleanIpv4 = if (rawIpv4.contains("/")) rawIpv4.substringBefore("/") else rawIpv4
-
-            val rawIpv6 = cloudflareData.getString("client_ipv6")
-            val cleanIpv6 = if (rawIpv6.contains("/")) rawIpv6.substringBefore("/") else rawIpv6
-
-            val ipv4Array = JSONArray().apply { put(cleanIpv4.trim()) }
-            val ipv6Array = JSONArray().apply { put(cleanIpv6.trim()) }
-
-            val finalConfig = JSONObject().apply {
-                put("private_key", cloudflareData.getString("privKey"))
-                put("public_key", cloudflareData.getString("cloudflare_pub"))
-                put("ipv4", ipv4Array)
-                put("ipv6", ipv6Array)
-                
-                put("endpoint", selectedIp.trim().ifBlank { "162.159.198.2" })
-                put("port", selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443)
-                put("sni", selectedSni.replace(Regex("^(https?://)?(www\\.)?"), "").substringBefore("/").ifBlank { "cdnjs.cloudflare.com" })
-            }
-            
-            configFile.writeText(finalConfig.toString(2))
-            android.util.Log.d("USQUE_BUILD", "config.json для MASQUE успешно записан!")
-        } catch (e: Exception) {
-            android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
-        }
-    }
-*/
-/*
-    fun saveFinalConfig(serverResponseJson: String, selectedIp: String, selectedPort: String) {
-        try {
-            val cloudflareData = JSONObject(serverResponseJson)
-            
-            // Очищаем IP от масок подсетей (убираем /32 или /128, если они есть)
-            val rawIpv4 = cloudflareData.optString("client_ipv4", "")
-            val cleanIpv4 = if (rawIpv4.contains("/")) rawIpv4.substringBefore("/") else rawIpv4
-
-            val rawIpv6 = cloudflareData.optString("client_ipv6", "")
-            val cleanIpv6 = if (rawIpv6.contains("/")) rawIpv6.substringBefore("/") else rawIpv6
-
-            // Формируем эндпоинты с портами (Go-код ожидает их в таком формате внутри endpoint_v4/v6)
-            val port = selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443
-            val ipV4 = selectedIp.trim().ifBlank { "162.159.198.2" }
-            val endpointV4WithPort = "$ipV4:$port"
-            
-            // Для IPv6 оборачиваем адрес в квадратные скобки, если это необходимо
-            val ipV6 = "2606:4700:103::2" // Значение по умолчанию или из UI
-            val endpointV6WithPort = if (ipV6.contains(":")) "[$ipV6]:$port" else "$ipV6:$port"
-
-            val finalConfig = JSONObject().apply {
-                // Соответствие маппингу json-тегов из Go-структуры:
-                put("private_key", cloudflareData.optString("privKey", ""))
-                put("endpoint_v4", endpointV4WithPort)
-                put("endpoint_v6", endpointV6WithPort)
-                put("endpoint_h2_v4", endpointV4WithPort) // Дублируем для HTTP/2 режима, если нужно
-                put("endpoint_h2_v6", endpointV6WithPort)
-                put("endpoint_pub_key", cloudflareData.optString("cloudflare_pub", ""))
-                put("id", cloudflareData.optString("id", ""))
-                put("access_token", cloudflareData.optString("access_token", ""))
-                put("ipv4", cleanIpv4.trim()) // Передаем как СТРОКУ, а не JSONArray
-                put("ipv6", cleanIpv6.trim()) // Передаем как СТРОКУ, а не JSONArray
-            }
-            
-            configFile.writeText(finalConfig.toString(2))
-            android.util.Log.d("USQUE_BUILD", "config.json для usque-go успешно записан!")
-        } catch (e: Exception) {
-            android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
-        }
-    }
-*/
-
-/*
-    fun saveFinalConfig(serverResponseJson: String, selectedIp: String, selectedPort: String) {
-        try {
-            val cloudflareData = JSONObject(serverResponseJson)
-            
-            // 1. Извлекаем чистые IP-адреса интерфейса
-            val rawIpv4 = cloudflareData.optString("client_ipv4", "172.16.0.2")
-            val cleanIpv4 = if (rawIpv4.contains("/")) rawIpv4.substringBefore("/") else rawIpv4
-
-            val rawIpv6 = cloudflareData.optString("client_ipv6", "")
-            val cleanIpv6 = if (rawIpv6.contains("/")) rawIpv6.substringBefore("/") else rawIpv6
-
-            // 2. Сборка эндпоинтов с выбранными пользователем в UI IP и Портом
-            val port = selectedPort.toIntOrNull()?.takeIf { it > 0 } ?: 443
-            val ipV4 = selectedIp.trim().ifBlank { "162.159.198.2" }
-            val endpointV4WithPort = "$ipV4:$port"
-            
-            val ipV6 = "2606:4700:103::2"
-            val endpointV6WithPort = if (ipV6.contains(":")) "[$ipV6]:$port" else "$ipV6:$port"
-
-            // 3. Формируем итоговый config.json строго по структуре вашего Go-движка
-            val finalConfig = JSONObject().apply {
-                put("private_key", cloudflareData.optString("privKey", ""))
-                put("endpoint_v4", endpointV4WithPort)
-                put("endpoint_v6", endpointV6WithPort)
-                put("endpoint_h2_v4", endpointV4WithPort)
-                put("endpoint_h2_v6", endpointV6WithPort)
-                
-                // Передаем публичный ключ сервера (PEM-блок из cloudflare_pub)
-                put("endpoint_pub_key", cloudflareData.optString("cloudflare_pub", ""))
-                
-                // Читаем id и access_token напрямую из нового ответа Воркера
-                put("id", cloudflareData.optString("id", ""))
-                put("access_token", cloudflareData.optString("access_token", ""))
-                
-                put("ipv4", cleanIpv4.trim())
-                put("ipv6", cleanIpv6.trim())
-            }
-            
-            configFile.writeText(finalConfig.toString(2))
-            android.util.Log.d("USQUE_BUILD", "config.json успешно собран и синхронизирован с Воркером!")
-        } catch (e: Exception) {
-            android.util.Log.e("USQUE_BUILD", "Ошибка сборки конфига: ${e.message}")
-        }
-    }
-*/
-
-//    // ЭКСПОРТ: Собирает все файлы настроек в одну строку и копирует в буфер
     // ЭКСПОРТ: Собирает все файлы настроек в чистый JSON и копирует в буфер
     fun exportAllConfigToClipboard() {
         try {
@@ -1505,33 +1079,26 @@ class MainActivity : Activity() {
                 exportData.put("profiles", JSONArray(profilesRaw))
             }
 
-            
-//            // 3. Переводим в Base64, чтобы ТСПУ или мессенджеры не ломали структуру кавычек
-//            val rawBytes = exportData.toString().toByteArray(java.nio.charset.StandardCharsets.UTF_8)
-//            val base64String = android.util.Base64.encodeToString(rawBytes, android.util.Base64.NO_WRAP)
-
             // 3. Переводим в обычную JSON-строку с красивыми отступами (2 пробела)
             // Если нужен компактный вид в одну строку, используйте просто exportData.toString()
             val jsonString = exportData.toString(2)
 
             // 4. Копируем в буфер обмена Android
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-//            val clip = ClipData.newPlainText("Usque Config", base64String)
             val clip = ClipData.newPlainText("Usque Config", jsonString)
             clipboard.setPrimaryClip(clip)
 
-            toast("Конфигурация скопирована в буфер обмена!")
+            toast(tr("Конфигурация скопирована в буфер обмена!", "Configuration copied to clipboard!"))
         } catch (e: Exception) {
-            toast("Ошибка экспорта: ${e.message}")
+            toast(tr("Ошибка экспорта: ${e.message}", "Export error: ${e.message}"))
         }
     }
 
-//    //  ИМПОРТ: Читает строку из буфера, распаковывает и восстанавливает файлы
     //  ИМПОРТ: Читает чистый JSON из буфера и восстанавливает файлы настройки
     fun importAllConfigFromClipboard() {
         try {
             if (vpnRunning) {
-                toast("Сначала отключите VPN!")
+                toast(tr("Сначала отключите VPN!", "Disable your VPN first!"))
                 return
             }
 
@@ -1539,19 +1106,12 @@ class MainActivity : Activity() {
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clipData = clipboard.primaryClip
             if (clipData == null || clipData.itemCount == 0) {
-                toast("Буфер обмена пуст!")
+                toast(tr("Буфер обмена пуст!", "The clipboard is empty!"))
                 return
             }
 
-//            val base64String = clipData.getItemAt(0).text.toString().trim()
             val rawJsonString = clipData.getItemAt(0).text.toString().trim()
             
-/*
-            // 2. Декодируем Base64 обратно в JSON
-            val decodedBytes = android.util.Base64.decode(base64String, android.util.Base64.DEFAULT)
-            val decodedString = String(decodedBytes, java.nio.charset.StandardCharsets.UTF_8)
-            val importData = JSONObject(decodedString)
-*/
             // 2. Сразу парсим строку как JSON (без декодирования Base64)
             val importData = JSONObject(rawJsonString)
 
@@ -1568,15 +1128,13 @@ class MainActivity : Activity() {
 
             // 5. Обновляем интерфейс приложения, чтобы новые данные отобразились на экране
             runOnUiThread {
-                toast("Конфигурация успешно импортирована!")
+                toast(tr("Конфигурация успешно импортирована!", "Configuration imported successfully!"))
                 loadProfiles()
-                refreshState("Конфиг обновлен")
+                refreshState(tr("Конфиг обновлен", "Config updated"))
                 runCatching { saveInputs() } 
             }
         } catch (e: Exception) {
-            toast("Ошибка импорта: Неверный формат данных")
+            toast(tr("Ошибка импорта: Неверный формат данных", "Import error: Invalid data format"))
         }
     }
-
-
 }

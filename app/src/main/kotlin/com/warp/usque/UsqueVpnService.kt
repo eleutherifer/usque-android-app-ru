@@ -22,9 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 class UsqueVpnService : VpnService() {
     companion object {
         const val ACTION_STOP = "com.warp.usque.STOP_VPN"
-//        const val ACTION_VPN_STATE = "com.warp.usque.VPN_STATE"
-//        const val EXTRA_STATE = "state"
-//        const val EXTRA_MESSAGE = "message"
         private const val TAG = "UsqueVpnService"
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "usque_vpn"
@@ -96,7 +93,6 @@ class UsqueVpnService : VpnService() {
             Usqueandroid.setSNI(sni)
             Usqueandroid.setEndpoint(endpoint)
 
-// 2026.07.19 TEST ТЕСТ Закомментировано для сборки со старой библиотекой
             Usqueandroid.setUseHttp2(useHttp2)
 
             Log.i(TAG, "native endpoint now=${runCatching { Usqueandroid.getEndpoint() }.getOrDefault("")}")
@@ -229,33 +225,6 @@ class UsqueVpnService : VpnService() {
             .getOrDefault("")
             .ifBlank { "172.16.0.2" }
     }
-/*
-    private fun stopVpn(reason: String = "stop") {
-        if (!stopping.compareAndSet(false, true)) {
-//            Log.i(TAG, "stopVpn($reason) skipped — уже останавливается")
-            return
-        }
-        try {
-            manualStop.set(true) // важно: выставляем СРАЗУ, а не только в onDestroy/onRevoke —
-                                  // иначе есть окно, где Go успевает вызвать OnDisconnected раньше,
-                                  // и handleTunnelFailure() решает, что это надо переподключать
-//            Log.i(TAG, "stopping vpn: $reason fd=$detachedTunFd running=${running.get()}")
-            running.set(false)
-            runCatching { Usqueandroid.stopTunnel() }
-                .onFailure { Log.w(TAG, "native stopTunnel failed", it) }
-            runCatching { tun?.close() }
-                .onFailure { Log.w(TAG, "tun close failed", it) }
-            tun = null
-            if (detachedTunFd >= 0) {
-                runCatching { Os.close(fileDescriptorFromInt(detachedTunFd)) }
-                    .onFailure { Log.w(TAG, "detached fd close failed", it) }
-                detachedTunFd = -1
-            }
-        } finally {
-            stopping.set(false)
-        }
-    }
-*/
     private fun stopVpn(reason: String = "stop") {
         if (!stopping.compareAndSet(false, true)) { return }
         try {
@@ -288,7 +257,6 @@ class UsqueVpnService : VpnService() {
         super.onDestroy()
     }
 
-// 2026.07.19 TEST ТЕСТ Функция временно закомментирована
     override fun onRevoke() {
         Log.w(TAG, "onRevoke: система отозвала VPN (скорее всего, запущен другой VPN)")
         manualStop.set(true)
@@ -306,5 +274,4 @@ class UsqueVpnService : VpnService() {
         isServiceConnected = (state == "connected")
         stateListener?.invoke(state, message)
     }
-
 }
