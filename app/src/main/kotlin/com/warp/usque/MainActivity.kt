@@ -59,6 +59,9 @@ class MainActivity : Activity() {
     private lateinit var endpointInput: TextInputEditText
     private lateinit var portInput: TextInputEditText
     private lateinit var sniInput: TextInputEditText
+    private lateinit var licenseKeyInput: TextInputEditText
+    private lateinit var saveLicenseBtn: MaterialButton
+    private lateinit var removeLicenseBtn: MaterialButton
     private lateinit var statusBanner: TextView
     private lateinit var statusText: TextView
     private lateinit var speedText: TextView
@@ -164,10 +167,11 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        title = "Usque RU"
+        title = "Usque RU ${appVersionName()}"
         useEnglish = prefs.getBoolean("useEnglish", false)
         buildUi()
         loadSavedState()
+        loadLicenseKey()
         refreshAppList()
         refreshState()
         resetSpeedMeter()
@@ -214,7 +218,7 @@ class MainActivity : Activity() {
             setBackgroundColor(bg)
         }
         val toolbar = MaterialToolbar(this).apply {
-            title = "Usque RU"
+            title = "Usque RU ${appVersionName()}"
             subtitle = null
             setTitleTextColor(textColor)
             setSubtitleTextColor(subText)
@@ -254,7 +258,7 @@ class MainActivity : Activity() {
         val homePage = buildHomePage()
         val configPage = buildConfigPage()
         val appsPage = buildAppsPage()
-        val titles = listOf("Usque RU", tr("Настройки подключения", "Connection Config"), tr("Выбор приложений", "Select Apps"))
+        val titles = listOf("Usque RU ${appVersionName()}", tr("Настройки подключения", "Connection Config"), tr("Выбор приложений", "Select Apps"))
         val pages = listOf(homePage, configPage, appsPage)
         fun showIndex(index: Int) {
             val safe = index.coerceIn(0, pages.lastIndex)
@@ -278,6 +282,28 @@ class MainActivity : Activity() {
             endpointInput.setText(parseEndpointHost(defaultEndpoint))
             portInput.setText(parseEndpointPort(defaultEndpoint, 443).toString())
             refreshState(tr("Загружен endpoint по умолчанию", "Default endpoint loaded"))
+        }
+        saveLicenseBtn.setOnClickListener {
+            val key = licenseKeyInput.text?.toString()?.trim().orEmpty()
+            if (key.isBlank()) { toast(tr("Введите ключ", "Enter a key")); return@setOnClickListener }
+            if (!hasValidRegistration()) { toast(tr("Сначала дождитесь регистрации", "Wait for registration first")); return@setOnClickListener }
+            Thread {
+                val err = runCatching { Usqueandroid.setLicenseKey(configFile.absolutePath, key) }.getOrDefault("error")
+                runOnUiThread {
+                    if (err.isNullOrBlank()) toast(tr("Ключ сохранён", "Key saved"))
+                    else toast(tr("Ошибка: $err", "Error: $err"))
+                }
+            }.start()
+        }
+        removeLicenseBtn.setOnClickListener {
+            if (!hasValidRegistration()) { toast(tr("Сначала дождитесь регистрации", "Wait for registration first")); return@setOnClickListener }
+            Thread {
+                val err = runCatching { Usqueandroid.removeLicenseKey(configFile.absolutePath) }.getOrDefault("error")
+                runOnUiThread {
+                    if (err.isNullOrBlank()) { licenseKeyInput.setText(""); toast(tr("Ключ удалён", "Key removed")) }
+                    else toast(tr("Ошибка: $err", "Error: $err"))
+                }
+            }.start()
         }
         saveNewProfileBtn.setOnClickListener { saveAsNewProfile() }
         overwriteProfileBtn.setOnClickListener { overwriteSelectedProfile() }
@@ -488,6 +514,19 @@ class MainActivity : Activity() {
         configBox.addView(defaultBtn, LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(3) })
         config.addView(configBox)
         content.addView(config)
+        content.addView(sectionTitle(tr("Лицензионный ключ", "License Key")))
+        val licenseCard = card()
+        val licenseBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(8)) }
+        licenseKeyInput = input("License Key", "XXXXXXXX-XXXXXXXX-XXXXXXXX")
+        saveLicenseBtn = secondaryButton(tr("Сохранить ключ", "Save Key"))
+        removeLicenseBtn = secondaryButton(tr("Удалить ключ", "Remove Key"))
+        val licenseBtnRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        licenseBtnRow.addView(saveLicenseBtn, LinearLayout.LayoutParams(0, dp(38), 1f).apply { rightMargin = dp(4) })
+        licenseBtnRow.addView(removeLicenseBtn, LinearLayout.LayoutParams(0, dp(38), 1f).apply { leftMargin = dp(4) })
+        licenseBox.addView(compactInputWrap("License Key", licenseKeyInput))
+        licenseBox.addView(licenseBtnRow, LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(6) })
+        licenseCard.addView(licenseBox)
+        content.addView(licenseCard)
         return content
     }
 
@@ -828,6 +867,13 @@ class MainActivity : Activity() {
         configDirty = false
         updateConfigState(); updateModeUi(); refreshHomeProfileSpinner(); updateCurrentProfileUi()
     }
+    private fun loadLicenseKey() {
+        if (!hasValidRegistration()) return
+        Thread {
+            val key = runCatching { Usqueandroid.getLicenseKey(configFile.absolutePath) }.getOrDefault("")
+            runOnUiThread { if (::licenseKeyInput.isInitialized) licenseKeyInput.setText(key) }
+        }.start()
+    }
 
     private fun ensureAppsLoaded() {
         if (appsLoaded) return
@@ -949,7 +995,11 @@ class MainActivity : Activity() {
             else -> tr("Подключение…", "Connecting…")
         }
         if (statusBanner.text != state) statusBanner.text = state
-        val newStatusText = "${tr("Статус", "Status")}: $state${if (extra.isNotBlank()) " · $extra" else ""}"
+        val transportLabel = if (vpnRunning) {
+            val isHttp2 = runCatching { Usqueandroid.getUseHttp2() }.getOrDefault(false)
+            " · " + if (isHttp2) "HTTP/2" else "QUIC"
+        } else ""
+        val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel${if (extra.isNotBlank()) " · $extra" else ""}"
         if (statusText.text != newStatusText) statusText.text = newStatusText
         val newColor = if (vpnRunning && tunnelReallyConnected) green else onPrimary
         if (statusBanner.getCurrentTextColor() != newColor) statusBanner.setTextColor(newColor) // цвет всегда дешёвая операция, можно не проверять
@@ -1168,4 +1218,8 @@ class MainActivity : Activity() {
             toast(tr("Ошибка импорта: Неверный формат данных", "Import error: Invalid data format"))
         }
     }
+
+    private fun appVersionName(): String = runCatching {
+        packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+    }.getOrDefault("")
 }
