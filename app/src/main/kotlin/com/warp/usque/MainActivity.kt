@@ -418,8 +418,8 @@ class MainActivity : Activity() {
             btn.setPadding(dp(4), dp(2), dp(4), dp(2))
         }
 
-        exportConfigBtn = secondaryButton(tr("Экспорт всего конфига в буфер", "Export entire config to buffer"))
-        importConfigBtn = secondaryButton(tr("Импорт конфига из буфера", "Import config from buffer"))
+        exportConfigBtn = secondaryButton(tr("Экспорт всего конфига в файл", "Export entire config to file"))
+        importConfigBtn = secondaryButton(tr("Импорт конфига из файла", "Import config from file"))
 
         val backupButtonsList = listOf(exportConfigBtn, importConfigBtn)
         backupButtonsList.forEach { btn ->
@@ -1075,7 +1075,7 @@ class MainActivity : Activity() {
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "application/json"
-                putExtra(Intent.EXTRA_TITLE, "usque-backup.json")
+                putExtra(Intent.EXTRA_TITLE, "usque.json")
             }
             startActivityForResult(intent, REQ_EXPORT_FILE)
         } catch (e: Exception) {
