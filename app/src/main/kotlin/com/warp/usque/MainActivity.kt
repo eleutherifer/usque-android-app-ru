@@ -1036,6 +1036,7 @@ class MainActivity : Activity() {
                     handler.post {
                         if (result.isNullOrBlank() && hasValidRegistration()) { 
                             log(tr("Зарегистрировано. Запрашивается разрешение на использование VPN…", "Registered. Requesting VPN permission…")); 
+                            loadLicenseKey()
                             requestVpnAndStart() 
                         } else { 
                             log(tr("Регистрация не удалась: ${result.ifNullOrBlank("Неизвестная ошибка")}", "Registration failed: ${result.ifNullOrBlank("Unknown error")}")); 
