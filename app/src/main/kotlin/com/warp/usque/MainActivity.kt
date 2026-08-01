@@ -549,7 +549,8 @@ class MainActivity : Activity() {
         endpointInput = input("Endpoint IP", "162.159.198.2")
         portInput = input("Connect Port", "443")
         useHttp2Switch = MaterialSwitch(this).apply {
-            text = tr("HTTP/2 вместо QUIC (обход блокировки UDP)", "HTTP/2 instead of QUIC (bypass UDP blocking)")
+//            text = tr("HTTP/2 вместо QUIC (обход блокировки UDP)", "HTTP/2 instead of QUIC (bypass UDP blocking)")
+            text = tr("HTTP/2 вместо QUIC", "HTTP/2 instead of QUIC")
             textSize = 16f
             setTextColor(textColor)
             setPadding(0, dp(6), 0, 0)
