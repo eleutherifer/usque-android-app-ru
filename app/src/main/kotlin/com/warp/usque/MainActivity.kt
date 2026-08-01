@@ -9,8 +9,9 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.net.VpnService
 import android.net.TrafficStats
+import android.net.Uri
+import android.net.VpnService
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -42,7 +43,11 @@ import java.net.URL
 import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
-    companion object { private const val REQ_VPN = 1001 }
+    companion object {
+        private const val REQ_VPN = 1001
+        private const val REQ_EXPORT_FILE = 9001
+        private const val REQ_IMPORT_FILE = 9002
+    }
     data class AppEntry(val label: String, val packageName: String)
     data class Profile(val sni: String, val endpoint: String, val port: Int, val http2: Boolean)
 
@@ -277,8 +282,8 @@ class MainActivity : Activity() {
         saveNewProfileBtn.setOnClickListener { saveAsNewProfile() }
         overwriteProfileBtn.setOnClickListener { overwriteSelectedProfile() }
         deleteProfileBtn.setOnClickListener { deleteSelectedProfile() }
-        exportConfigBtn.setOnClickListener { exportAllConfigToClipboard() }
-        importConfigBtn.setOnClickListener { importAllConfigFromClipboard() }
+        exportConfigBtn.setOnClickListener { exportAllConfigToFile() }
+        importConfigBtn.setOnClickListener { importAllConfigFromFile() }
         connectButton.setOnClickListener { if (vpnRunning) disconnectVpn() else connectVpn() }
         sniInput.addTextChangedListener(dirtyWatcher())
         endpointInput.addTextChangedListener(dirtyWatcher())
@@ -1060,78 +1065,104 @@ class MainActivity : Activity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_VPN && resultCode == RESULT_OK) { vpnGranted = true; if (hasValidRegistration()) startTunnelNow() else connectVpn() }
         else if (requestCode == REQ_VPN) toast(tr("Доступ к VPN не разрешен в системе", "VPN permission denied"))
+        else if (requestCode == REQ_EXPORT_FILE && resultCode == RESULT_OK) { data?.data?.let { writeExportToUri(it) } }
+        else if (requestCode == REQ_IMPORT_FILE && resultCode == RESULT_OK) { data?.data?.let { readImportFromUri(it) } }
     }
 
-    // ЭКСПОРТ: Собирает все файлы настроек в чистый JSON и копирует в буфер
-    fun exportAllConfigToClipboard() {
+    // ЭКСПОРТ: Собирает все файлы настроек в чистый JSON и копирует в файл
+    fun exportAllConfigToFile() {
         try {
-            val exportData = JSONObject()
-
-            // 1. Читаем основной config.json (ключи MASQUE, IP, Порт, SNI)
-            if (configFile.exists()) {
-                exportData.put("config", JSONObject(configFile.readText()))
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/json"
+                putExtra(Intent.EXTRA_TITLE, "usque-backup.json")
             }
+            startActivityForResult(intent, REQ_EXPORT_FILE)
+        } catch (e: Exception) {
+            toast(tr("Ошибка: ${e.message}", "Error: ${e.message}"))
+        }
+    }
 
-            // 2. Читаем сохраненные профили (схемы переключения)
-            // Имя файла "profiles.json" может отличаться, проверьте как оно названо в вашем коде
-            val profilesRaw = prefs.getString("profilesJson", null)
-            if (!profilesRaw.isNullOrBlank()) {
-                exportData.put("profiles", JSONArray(profilesRaw))
+    //  ИМПОРТ: Читает чистый JSON из файла и восстанавливает файлы настройки
+    fun importAllConfigFromFile() {
+        if (vpnRunning) { toast(tr("Сначала отключите VPN!", "Disable your VPN first!")); return }
+        try {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/json"
             }
+            startActivityForResult(intent, REQ_IMPORT_FILE)
+        } catch (e: Exception) {
+            toast(tr("Ошибка: ${e.message}", "Error: ${e.message}"))
+        }
+    }
 
-            // 3. Переводим в обычную JSON-строку с красивыми отступами (2 пробела)
-            // Если нужен компактный вид в одну строку, используйте просто exportData.toString()
-            val jsonString = exportData.toString(2)
+    private fun buildExportJson(): String {
+        val exportData = JSONObject()
+        if (configFile.exists()) exportData.put("config", JSONObject(configFile.readText()))
 
-            // 4. Копируем в буфер обмена Android
-            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("Usque Config", jsonString)
-            clipboard.setPrimaryClip(clip)
+        val p = JSONObject()
+        p.put("sni", prefs.getString("sni", ""))
+        p.put("endpoint", prefs.getString("endpoint", ""))
+        p.put("connectPort", prefs.getInt("connectPort", 443))
+        p.put("useHttp2", prefs.getBoolean("useHttp2", false))
+        p.put("splitMode", prefs.getBoolean("splitMode", false))
+        p.put("currentProfileName", prefs.getString("currentProfileName", ""))
+        p.put("useEnglish", prefs.getBoolean("useEnglish", false))
+        val pkgs = JSONArray()
+        (prefs.getStringSet("selectedPackages", emptySet()) ?: emptySet()).forEach { pkgs.put(it) }
+        p.put("selectedPackages", pkgs)
+        exportData.put("prefs", p)
 
-            toast(tr("Конфигурация скопирована в буфер обмена!", "Configuration copied to clipboard!"))
+        val profilesRaw = prefs.getString("profilesJson", null)
+        if (!profilesRaw.isNullOrBlank()) exportData.put("profiles", JSONArray(profilesRaw))
+
+        return exportData.toString(2)
+    }
+
+    private fun writeExportToUri(uri: Uri) {
+        try {
+            contentResolver.openOutputStream(uri)?.use { it.write(buildExportJson().toByteArray(Charsets.UTF_8)) }
+            toast(tr("Конфигурация сохранена в файл!", "Configuration saved to file!"))
         } catch (e: Exception) {
             toast(tr("Ошибка экспорта: ${e.message}", "Export error: ${e.message}"))
         }
     }
 
-    //  ИМПОРТ: Читает чистый JSON из буфера и восстанавливает файлы настройки
-    fun importAllConfigFromClipboard() {
+    private fun readImportFromUri(uri: Uri) {
         try {
-            if (vpnRunning) {
-                toast(tr("Сначала отключите VPN!", "Disable your VPN first!"))
-                return
+            val raw = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+            val importData = JSONObject(raw)
+
+            if (importData.has("config")) configFile.writeText(importData.getJSONObject("config").toString(2))
+
+            if (importData.has("prefs")) {
+                val p = importData.getJSONObject("prefs")
+                val e = prefs.edit()
+                if (p.has("sni")) e.putString("sni", p.getString("sni"))
+                if (p.has("endpoint")) e.putString("endpoint", p.getString("endpoint"))
+                if (p.has("connectPort")) e.putInt("connectPort", p.getInt("connectPort"))
+                if (p.has("useHttp2")) e.putBoolean("useHttp2", p.getBoolean("useHttp2"))
+                if (p.has("splitMode")) e.putBoolean("splitMode", p.getBoolean("splitMode"))
+                if (p.has("currentProfileName")) e.putString("currentProfileName", p.getString("currentProfileName"))
+                if (p.has("useEnglish")) e.putBoolean("useEnglish", p.getBoolean("useEnglish"))
+                if (p.has("selectedPackages")) {
+                    val arr = p.getJSONArray("selectedPackages")
+                    val set = mutableSetOf<String>()
+                    for (i in 0 until arr.length()) set.add(arr.getString(i))
+                    e.putStringSet("selectedPackages", set)
+                }
+                e.apply()
             }
-
-            // 1. Получаем текст из буфера обмена
-            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clipData = clipboard.primaryClip
-            if (clipData == null || clipData.itemCount == 0) {
-                toast(tr("Буфер обмена пуст!", "The clipboard is empty!"))
-                return
-            }
-
-            val rawJsonString = clipData.getItemAt(0).text.toString().trim()
-            
-            // 2. Сразу парсим строку как JSON (без декодирования Base64)
-            val importData = JSONObject(rawJsonString)
-
-            // 3. Восстанавливаем основной config.json
-            if (importData.has("config")) {
-                configFile.writeText(importData.getJSONObject("config").toString(2))
-            }
-
-            // 4. Восстанавливаем профили переключения
             if (importData.has("profiles")) {
-                val profilesArr = importData.getJSONArray("profiles")
-                prefs.edit().putString("profilesJson", profilesArr.toString()).apply()
+                prefs.edit().putString("profilesJson", importData.getJSONArray("profiles").toString()).apply()
             }
 
-            // 5. Обновляем интерфейс приложения, чтобы новые данные отобразились на экране
             runOnUiThread {
                 toast(tr("Конфигурация успешно импортирована!", "Configuration imported successfully!"))
                 loadProfiles()
+                loadSavedState()
                 refreshState(tr("Конфиг обновлен", "Config updated"))
-                runCatching { saveInputs() } 
             }
         } catch (e: Exception) {
             toast(tr("Ошибка импорта: Неверный формат данных", "Import error: Invalid data format"))
