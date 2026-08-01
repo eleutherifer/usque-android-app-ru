@@ -219,7 +219,7 @@ jobs:
           APK_PATH=$(find dist -name '*.apk' | head -1)
           if [ -n "$VT_API_KEY" ] && [ -f "$APK_PATH" ]; then
             UPLOAD_URL=$(curl -s "https://www.virustotal.com/api/v3/files/upload_url" -H "x-apikey: $VT_API_KEY" | grep -o '"data":"[^"]*"' | cut -d'"' -f4)
-            curl -s -X POST "$UPLOAD_URL" -H "x-apikey: $VIRUSTOTAL_API_KEY" -F "file=@$APK_PATH" > vt-result.json
+            curl -s -X POST "$UPLOAD_URL" -H "x-apikey: $VT_API_KEY" -F "file=@$APK_PATH" > vt-result.json
             cat vt-result.json
           fi
           
