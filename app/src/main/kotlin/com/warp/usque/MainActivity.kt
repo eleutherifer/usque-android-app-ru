@@ -296,6 +296,10 @@ class MainActivity : Activity() {
             }.start()
         }
         removeLicenseBtn.setOnClickListener {
+            if (licenseKeyInput.text.isNullOrBlank()) {
+                toast(tr("Ключ и так не установлен", "No key is set"))
+                return@setOnClickListener
+            }
             if (!hasValidRegistration()) { toast(tr("Сначала дождитесь регистрации", "Wait for registration first")); return@setOnClickListener }
             Thread {
                 val err = runCatching { Usqueandroid.removeLicenseKey(configFile.absolutePath) }.getOrDefault("error")
