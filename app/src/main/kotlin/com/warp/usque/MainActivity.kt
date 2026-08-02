@@ -289,22 +289,23 @@ class MainActivity : Activity() {
             if (!hasValidRegistration()) { toast(tr("Сначала дождитесь регистрации", "Wait for registration first")); return@setOnClickListener }
             Thread {
                 val err = runCatching { Usqueandroid.setLicenseKey(configFile.absolutePath, key) }.getOrDefault("error")
+                val newKey = runCatching { Usqueandroid.getLicenseKey(configFile.absolutePath) }.getOrDefault("")
                 runOnUiThread {
+                    licenseKeyInput.setText(newKey)
                     if (err.isNullOrBlank()) toast(tr("Ключ сохранён", "Key saved"))
                     else toast(tr("Ошибка: $err", "Error: $err"))
                 }
             }.start()
         }
         removeLicenseBtn.setOnClickListener {
-            if (licenseKeyInput.text.isNullOrBlank()) {
-                toast(tr("Ключ и так не установлен", "No key is set"))
-                return@setOnClickListener
-            }
+            if (licenseKeyInput.text.isNullOrBlank()) { toast(tr("Ключ и так не установлен", "No key is set")); return@setOnClickListener }
             if (!hasValidRegistration()) { toast(tr("Сначала дождитесь регистрации", "Wait for registration first")); return@setOnClickListener }
             Thread {
                 val err = runCatching { Usqueandroid.removeLicenseKey(configFile.absolutePath) }.getOrDefault("error")
+                val newKey = runCatching { Usqueandroid.getLicenseKey(configFile.absolutePath) }.getOrDefault("")
                 runOnUiThread {
-                    if (err.isNullOrBlank()) { licenseKeyInput.setText(""); toast(tr("Ключ удалён", "Key removed")) }
+                    licenseKeyInput.setText(newKey)
+                    if (err.isNullOrBlank()) toast(tr("Ключ удалён", "Key removed"))
                     else toast(tr("Ошибка: $err", "Error: $err"))
                 }
             }.start()
