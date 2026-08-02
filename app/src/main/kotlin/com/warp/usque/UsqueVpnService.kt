@@ -75,6 +75,7 @@ class UsqueVpnService : VpnService() {
         lastSni = sni
         lastEndpoint = endpoint
         lastSplitMode = splitMode
+        lastUseHttp2 = useHttp2
         lastAllowedApps = ArrayList(allowedApps)
 
         if (running.get()) return Service.START_STICKY
