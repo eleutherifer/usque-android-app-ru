@@ -56,7 +56,7 @@ class UsqueVpnService : VpnService() {
         if (intent?.action == ACTION_STOP) {
             Log.i(TAG, "stop requested")
             manualStop.set(true)
-            executor.execute { stopVpn("ACTION_STOP") }
+            stopVpn("ACTION_STOP")
             stopSelf()
             return Service.START_NOT_STICKY
         }

@@ -1090,6 +1090,7 @@ class MainActivity : Activity() {
         tunnelStopping = true
         refreshState(tr("Остановка", "Stopping"))
         resetSpeedMeter()
+        UsqueVpnService.stopActiveTunnel()
         runCatching { startService(Intent(this, UsqueVpnService::class.java).setAction(UsqueVpnService.ACTION_STOP)) }
 
         // Это только обновляет текст на экране побыстрее — саму защиту (tunnelStopping) НЕ трогает.
