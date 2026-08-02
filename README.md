@@ -49,9 +49,19 @@ https://github.com/eleutherifer/usque-android-app-ru/releases/download/v1.0.4.1/
 - JDK 17
 - Android SDK, API 34
 - Gradle 8.5 or compatible Gradle setup
-- Prebuilt upstream Android artifacts already included in this repository:
-  - `app/libs/usque.aar`
-  - `app/libs/usque-classes.jar`
+
+### Native library (`usque.aar` / `usque-classes.jar`)
+
+This repo does not commit prebuilt native artifacts. They are built from
+[`eleutherifer/usque-android`](https://github.com/eleutherifer/usque-android)
+via `gomobile bind` — see `.github/workflows/android.yml`.
+
+- **Recommended:** just use GitHub Actions — it builds the native library
+  from source before building the APK, every time.
+- **Fully local build:** run the same `gomobile bind` steps as in
+  `android.yml` yourself, then place the resulting `usque.aar` /
+  `usque-classes.jar` in `app/libs/` and the extracted `.so` files in
+  `app/src/main/jniLibs/{arm64-v8a,armeabi-v7a}/` before running Gradle.
 
 ### Build Steps
 
