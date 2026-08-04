@@ -1004,7 +1004,10 @@ class MainActivity : Activity() {
             val isHttp2 = runCatching { Usqueandroid.getUseHttp2() }.getOrDefault(false)
             " · " + if (isHttp2) "HTTP/2" else "QUIC"
         } else ""
-        val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel${if (extra.isNotBlank()) " · $extra" else ""}"
+        val ipLabel = if (vpnRunning && tunnelReallyConnected) {
+            " · IP: " + runCatching { Usqueandroid.getAssignedIPv4(configFile.absolutePath) }.getOrDefault("").ifBlank { "?" }
+        } else ""
+        val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel$ipLabel${if (extra.isNotBlank()) " · $extra" else ""}"
         if (statusText.text != newStatusText) statusText.text = newStatusText
         val newColor = if (vpnRunning && tunnelReallyConnected) green else onPrimary
         if (statusBanner.getCurrentTextColor() != newColor) statusBanner.setTextColor(newColor) // цвет всегда дешёвая операция, можно не проверять
