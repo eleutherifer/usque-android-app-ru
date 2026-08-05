@@ -113,6 +113,7 @@ class MainActivity : Activity() {
     override fun onStart() {
         super.onStart()
         UsqueVpnService.stateListener = { state, message ->
+            DiagLog.add("UI", "stateListener: $state ${message}".trim())
             runOnUiThread {
                 when (state) {
                     "connected" -> {
@@ -1116,7 +1117,10 @@ class MainActivity : Activity() {
     private fun normalizedEndpoint(): String = "${normalizedEndpointHost()}:${normalizedPort()}"
     private fun parseEndpointHost(value: String): String { val v = value.trim(); if (v.isBlank()) return "162.159.198.2"; if (v.startsWith("[") && v.contains("]")) return v.substringAfter("[").substringBefore("]"); return if (v.count { it == ':' } == 1) v.substringBefore(':') else v }
     private fun parseEndpointPort(value: String, fallback: Int): Int { val v = value.trim(); val p = when { v.startsWith("[") && v.contains("]:") -> v.substringAfter("]:"); v.count { it == ':' } == 1 -> v.substringAfter(':'); else -> "" }; return p.toIntOrNull()?.takeIf { it in 1..65535 } ?: fallback }
-    private fun log(msg: String) { logText.text = msg }
+    private fun log(msg: String) {
+        logText.text = msg
+        DiagLog.add("UI", msg)
+    }
     private fun String?.ifNullOrBlank(fallback: String): String = if (this.isNullOrBlank()) fallback else this
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 
