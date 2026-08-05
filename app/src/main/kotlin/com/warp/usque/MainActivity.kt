@@ -413,6 +413,7 @@ class MainActivity : Activity() {
         configStateText = TextView(this)
         logText = TextView(this).apply {
             text = tr("Нажмите «Подключить». При первом запуске профиль зарегистрируется автоматически, и VPN запустится.", "Tap Connect. First launch will register automatically and start VPN.")
+            setOnClickListener { showDiagLogDialog() }
         }
 
         val languageCard = card()
@@ -1121,6 +1122,30 @@ class MainActivity : Activity() {
         logText.text = msg
         DiagLog.add("UI", msg)
     }
+
+    private fun showDiagLogDialog() {
+        val logsText = DiagLog.getAll().ifBlank { tr("Логов пока нет.", "No logs yet.") }
+        val textView = TextView(this).apply {
+            text = logsText
+            setTextIsSelectable(true)
+            typeface = Typeface.MONOSPACE
+            textSize = 11f
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+        }
+        val scroll = ScrollView(this).apply { addView(textView) }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(tr("Логи", "Logs"))
+            .setView(scroll)
+            .setPositiveButton(tr("Копировать", "Copy")) { _, _ ->
+                val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                cm.setPrimaryClip(ClipData.newPlainText("usque logs", DiagLog.getAll()))
+            }
+            .setNeutralButton(tr("Очистить", "Clear")) { _, _ -> DiagLog.clear() }
+            .setNegativeButton(tr("Закрыть", "Close"), null)
+            .show()
+    }
+    
     private fun String?.ifNullOrBlank(fallback: String): String = if (this.isNullOrBlank()) fallback else this
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 
