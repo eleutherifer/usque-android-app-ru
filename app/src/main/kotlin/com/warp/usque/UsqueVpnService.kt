@@ -55,6 +55,7 @@ class UsqueVpnService : VpnService() {
         activeService = this
         if (intent?.action == ACTION_STOP) {
             Log.i(TAG, "stop requested")
+            DiagLog.add("Service", "stop requested")
             manualStop.set(true)
             stopVpn("ACTION_STOP")
             stopSelf()
@@ -90,6 +91,7 @@ class UsqueVpnService : VpnService() {
             isServiceRunning = true
             isServiceConnected = false
             Log.i(TAG, "starting vpn service endpoint=$endpoint sni=$sni splitMode=$splitMode allowedApps=${allowedApps.size} config=$configPath")
+            DiagLog.add("Service", "start endpoint=$endpoint sni=$sni http2=$useHttp2 split=$splitMode")
             Usqueandroid.resetConnectionOptions()
             Usqueandroid.setSNI(sni)
             Usqueandroid.setEndpoint(endpoint)
@@ -98,10 +100,12 @@ class UsqueVpnService : VpnService() {
 
             Log.i(TAG, "native endpoint now=${runCatching { Usqueandroid.getEndpoint() }.getOrDefault("")}")
 
+            val localIp = safeIPv4(configPath)
+            DiagLog.add("Service", "local tun IPv4=$localIp")
             val builder = Builder()
                 .setSession("Usque RU VPN")
                 .setMtu(1280)
-                .addAddress(safeIPv4(configPath), 32)
+                .addAddress(localIp, 32)
                 .addDnsServer("1.1.1.1")
                 .addDnsServer("1.0.0.1")
                 .addRoute("0.0.0.0", 0)
@@ -135,22 +139,26 @@ class UsqueVpnService : VpnService() {
             detachedTunFd = pfd.detachFd()
             tun = null
             Log.i(TAG, "tun established fd=$detachedTunFd")
+            DiagLog.add("Service", "tun established fd=$detachedTunFd")
 
             // Native fd mode: Go owns the Android TUN fd and handles the full data plane.
             // Do NOT pass connect-port here. The second argument is tunFd.
             val err = Usqueandroid.startTunnelWithFd(configPath, detachedTunFd.toLong(), object : VpnStateCallback {
                 override fun onConnected() {
                     restarting.set(false)
-//                    Log.i(TAG, "tunnel connected")
+                    Log.i(TAG, "tunnel connected")
+                    DiagLog.add("Service", "onConnected")
                     broadcastState("connected")
                 }
                 override fun onDisconnected(reason: String?) {
-//                    Log.w(TAG, "tunnel disconnected: $reason")
+                    Log.w(TAG, "tunnel disconnected: $reason")
+                    DiagLog.add("Service", "onDisconnected: ${reason.orEmpty()}")
                     broadcastState(if (manualStop.get()) "disconnected" else "reconnecting", reason.orEmpty())
                     handleTunnelFailure("native disconnected: ${reason.orEmpty()}")
                 }
                 override fun onError(message: String?) {
                     Log.e(TAG, "tunnel error: $message")
+                    DiagLog.add("Service", "onError: ${message.orEmpty()}")
                     broadcastState(if (manualStop.get()) "disconnected" else "reconnecting", message.orEmpty())
                     handleTunnelFailure("native error: ${message.orEmpty()}")
                 }
@@ -160,6 +168,7 @@ class UsqueVpnService : VpnService() {
             Log.i(TAG, "startTunnelWithFd returned without error")
         } catch (e: Exception) {
             Log.e(TAG, "vpn service failed", e)
+            DiagLog.add("Service", "exception: ${e.message ?: e.javaClass.simpleName}")
             handleTunnelFailure("exception: ${e.message ?: e.javaClass.simpleName}")
         }
     }
@@ -228,6 +237,7 @@ class UsqueVpnService : VpnService() {
     }
     private fun stopVpn(reason: String = "stop") {
         if (!stopping.compareAndSet(false, true)) { return }
+        DiagLog.add("Service", "stopVpn: $reason")
         try {
             manualStop.set(true)
             running.set(false)
