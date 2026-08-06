@@ -143,12 +143,18 @@ class MainActivity : Activity() {
         UsqueVpnService.stateListener = null
     }
 
+    private var diagTickCount = 0
     private val speedTicker = object : Runnable {
         override fun run() {
             updateSpeedLine()
+            diagTickCount++
+            if (vpnRunning && tunnelReallyConnected && diagTickCount % 5 == 0) {
+                DiagLog.add("Stats", runCatching { Usqueandroid.getPacketStats() }.getOrDefault("n/a"))
+            }
             handler.postDelayed(this, 1000)
         }
     }
+
     private val profiles = linkedMapOf<String, Profile>()
     private val allApps = mutableListOf<AppEntry>()
     private val selectedPackages = linkedSetOf<String>()
