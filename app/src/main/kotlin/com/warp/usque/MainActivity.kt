@@ -415,6 +415,7 @@ class MainActivity : Activity() {
             text = tr("Нажмите «Подключить». При первом запуске профиль зарегистрируется автоматически, и VPN запустится.", "Tap Connect. First launch will register automatically and start VPN.")
             setOnClickListener { showDiagLogDialog() }
         }
+        content.addView(logText, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
 
         val languageCard = card()
         val languageBox = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(16), dp(12), dp(16), dp(12)) }
