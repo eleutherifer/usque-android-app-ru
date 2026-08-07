@@ -144,12 +144,20 @@ class MainActivity : Activity() {
     }
 
     private var diagTickCount = 0
+    private var samplesLogged = false
     private val speedTicker = object : Runnable {
         override fun run() {
             updateSpeedLine()
             diagTickCount++
             if (vpnRunning && tunnelReallyConnected && diagTickCount % 5 == 0) {
                 DiagLog.add("Stats", runCatching { Usqueandroid.getPacketStats() }.getOrDefault("n/a"))
+                if (!samplesLogged) {
+                    val samples = runCatching { Usqueandroid.getPacketSamples() }.getOrDefault("")
+                    if (samples.isNotBlank()) {
+                        DiagLog.add("Samples", "\n" + samples)
+                        samplesLogged = true
+                    }
+                }
             }
             handler.postDelayed(this, 1000)
         }
