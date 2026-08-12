@@ -25,7 +25,7 @@ on:
 env:
   UPSTREAM_REPO: ${{ github.event.inputs.upstream_repo || 'eleutherifer/usque-android' }}
   UPSTREAM_REF: ${{ github.event.inputs.upstream_ref || 'main' }}
-  GO_VERSION: '1.25'
+  GO_VERSION: '1.26.3'
   NDK_VERSION: '26.1.10909125'
   ANDROID_API: '24'
 
