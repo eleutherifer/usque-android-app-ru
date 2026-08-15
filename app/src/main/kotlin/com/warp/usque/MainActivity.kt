@@ -1113,6 +1113,13 @@ class MainActivity : Activity() {
         UsqueVpnService.stopActiveTunnel()
         runCatching { startService(Intent(this, UsqueVpnService::class.java).setAction(UsqueVpnService.ACTION_STOP)) }
 
+        handler.postDelayed({
+            val trace = runCatching { Usqueandroid.getShutdownTrace() }.getOrDefault("")
+            if (trace.isNotBlank()) {
+                DiagLog.add("Trace", "\n" + trace)
+            }
+        }, 3000)
+
         // Это только обновляет текст на экране побыстрее — саму защиту (tunnelStopping) НЕ трогает.
         handler.postDelayed({
             runCatching { stopService(Intent(this, UsqueVpnService::class.java)) }
