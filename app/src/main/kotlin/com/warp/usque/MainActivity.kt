@@ -107,7 +107,7 @@ class MainActivity : Activity() {
     private var lastRxBytes = 0L
     private var lastTxBytes = 0L
     private var lastSpeedTs = 0L
-
+    private var lastToggleClickAt = 0L
     private var tunnelReallyConnected = false
 
     override fun onStart() {
@@ -328,7 +328,12 @@ class MainActivity : Activity() {
         deleteProfileBtn.setOnClickListener { deleteSelectedProfile() }
         exportConfigBtn.setOnClickListener { exportAllConfigToFile() }
         importConfigBtn.setOnClickListener { importAllConfigFromFile() }
-        connectButton.setOnClickListener { if (vpnRunning) disconnectVpn() else connectVpn() }
+        connectButton.setOnClickListener {
+            val now = System.currentTimeMillis()
+            if (now - lastToggleClickAt < 800) return@setOnClickListener
+            lastToggleClickAt = now
+            if (vpnRunning) disconnectVpn() else connectVpn()
+        }
         sniInput.addTextChangedListener(dirtyWatcher())
         endpointInput.addTextChangedListener(dirtyWatcher())
         portInput.addTextChangedListener(dirtyWatcher())
