@@ -169,6 +169,15 @@ class UsqueVpnService : VpnService() {
         } catch (e: Exception) {
             Log.e(TAG, "vpn service failed", e)
             DiagLog.add("Service", "exception: ${e.message ?: e.javaClass.simpleName}")
+            // Go отверг fd ещё до того, как взял его в работу (например,
+            // "Tunnel is already running") — значит закрыть его может только
+            // Kotlin. detachFd() уже отвязал его от ParcelFileDescriptor,
+            // поэтому оборачиваем обратно через adoptFd(), только чтобы закрыть.
+            if (detachedTunFd >= 0) {
+                runCatching { ParcelFileDescriptor.adoptFd(detachedTunFd).close() }
+                    .onFailure { Log.w(TAG, "failed to close orphaned tun fd=$detachedTunFd", it) }
+                detachedTunFd = -1
+            }
             handleTunnelFailure("exception: ${e.message ?: e.javaClass.simpleName}")
         }
     }
