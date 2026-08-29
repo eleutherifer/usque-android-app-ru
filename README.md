@@ -37,10 +37,10 @@ Download the latest APK from the [Releases](https://github.com/eleutherifer/usqu
 Direct download:
 
 ```text
-https://github.com/eleutherifer/usque-android-app-ru/releases/download/v1.0.4.1/usque-android-app-ru-release-v1.0.4.1.apk
+https://github.com/eleutherifer/usque-android-app-ru/releases/download/v4.2.1.7/usque-android-app-ru-release-v4.2.1.7.apk
 ```
 
-> The GitHub Actions workflow reads `versionName` from `app/build.gradle` and publishes the APK to the matching versioned Release, for example `1.0.4.1` → `v1.0.4.1`.
+> The GitHub Actions workflow reads `versionName` from `app/build.gradle` and publishes the APK to the matching versioned Release, for example `4.2.1.7` → `v4.2.1.7`.
 
 ## 🛠️ Build from Source
 
@@ -124,7 +124,7 @@ docs/github-actions-signing.md
 
 | Parameter | Example / Default | Description |
 |-----------|-------------------|-------------|
-| SNI | `cdnjs.cloudflare.com` | TLS SNI value used by the tunnel |
+| SNI | `speed.cloudflare.com` | TLS SNI value used by the tunnel |
 | Endpoint | `162.159.198.2:433` | WARP / MASQUE endpoint |
 | Mode | Global / Per-App | Traffic routing mode |
 

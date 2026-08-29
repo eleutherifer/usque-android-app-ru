@@ -311,7 +311,7 @@ class MainActivity : Activity() {
             }.start()
         }
         removeLicenseBtn.setOnClickListener {
-            if (licenseKeyInput.text.isNullOrBlank()) { toast(tr("Ключ и так не установлен", "No key is set")); return@setOnClickListener }
+//            if (licenseKeyInput.text.isNullOrBlank()) { toast(tr("Ключ и так не установлен", "No key is set")); return@setOnClickListener }
             if (!hasValidRegistration()) { toast(tr("Сначала дождитесь регистрации", "Wait for registration first")); return@setOnClickListener }
             Thread {
                 val err = runCatching { Usqueandroid.removeLicenseKey(configFile.absolutePath) }.getOrDefault("error")
@@ -456,7 +456,7 @@ class MainActivity : Activity() {
         val profileCard = card()
         val profileBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(10)) }
         profileSpinner = Spinner(this).apply { background = round(surface2, dp(16), outline); setPadding(dp(10), 0, dp(10), 0) }
-        profileNameInput = input(tr("Название профиля", "Profile Name"), tr("Например：cdnjs.cloudflare.com 443 / cdnjs.cloudflare.com 8443", "e.g. cdnjs.cloudflare.com 443 / cdnjs.cloudflare.com 8443"))
+        profileNameInput = input(tr("Название профиля", "Profile Name"), tr("Например：speed.cloudflare.com 443 / speed.cloudflare.com 8443", "e.g. speed.cloudflare.com 443 / speed.cloudflare.com 8443"))
         saveNewProfileBtn = secondaryButton(tr("Сохранить как новый", "Save as New"))
         overwriteProfileBtn = secondaryButton(tr("Перезаписать текущий", "Overwrite Current"))
         deleteProfileBtn = secondaryButton(tr("Удалить выбранный профиль", "Delete Profile"))
@@ -524,12 +524,12 @@ class MainActivity : Activity() {
         content.addView(sectionTitle(tr("Текущие параметры подключения", "Current Connection")))
         val config = card()
         val configBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(8)) }
-        sniInput = input("SNI", "cdnjs.cloudflare.com")
+        sniInput = input("SNI", "speed.cloudflare.com")
         endpointInput = input("Endpoint IP", "162.159.198.2")
         portInput = input("Connect Port", "443")
         useHttp2Switch = MaterialSwitch(this).apply {
 //            text = tr("HTTP/2 вместо QUIC (обход блокировки UDP)", "HTTP/2 instead of QUIC (bypass UDP blocking)")
-            text = tr("HTTP/2 вместо QUIC", "HTTP/2 instead of QUIC")
+            text = tr("HTTP/2 вместо HTTP/3", "HTTP/2 instead of HTTP/3")
             textSize = 16f
             setTextColor(textColor)
             setPadding(0, dp(6), 0, 0)
@@ -743,7 +743,7 @@ class MainActivity : Activity() {
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
                 profiles[o.getString("name")] = Profile(
-                    o.optString("sni", "cdnjs.cloudflare.com"),
+                    o.optString("sni", "speed.cloudflare.com"),
                     o.optString("endpoint", "162.159.198.2"),
                     o.optInt("port", 443),
                     o.optBoolean("http2", false)  // у старых профилей в JSON этого поля нет — optBoolean тихо даст false, ничего не сломается
@@ -751,14 +751,14 @@ class MainActivity : Activity() {
             }
         }
         if (profiles.isEmpty()) {
-            profiles["cdnjs.cloudflare.com:443:162.159.198.2 (loc 1) h3"] = Profile("cdnjs.cloudflare.com", "162.159.198.2", 443, false)
-            profiles["cdnjs.cloudflare.com:443:162.159.199.2 (loc 2) h3"] = Profile("cdnjs.cloudflare.com", "162.159.199.2", 443, false)
-            profiles["cdnjs.cloudflare.com:443:162.159.198.2 (loc 1) h2"] = Profile("cdnjs.cloudflare.com", "162.159.198.2", 443, true)
-            profiles["cdnjs.cloudflare.com:443:162.159.199.2 (loc 2) h2"] = Profile("cdnjs.cloudflare.com", "162.159.199.2", 443, true)
-            profiles["deepseek.com:443:162.159.198.2 (loc 1) h3"] = Profile("deepseek.com", "162.159.198.2", 443, false)
-            profiles["deepseek.com:443:162.159.199.2 (loc 2) h3"] = Profile("deepseek.com", "162.159.199.2", 443, false)
-            profiles["deepseek.com:443:162.159.198.2 (loc 1) h2"] = Profile("deepseek.com", "162.159.198.2", 443, true)
-            profiles["deepseek.com:443:162.159.199.2 (loc 2) h2"] = Profile("deepseek.com", "162.159.199.2", 443, true)
+            profiles["speed.cloudflare.com:443:162.159.198.2 (loc 1) HTTP/3"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, false)
+            profiles["speed.cloudflare.com:443:162.159.199.2 (loc 2) HTTP/3"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, false)
+            profiles["speed.cloudflare.com:443:162.159.198.2 (loc 1) HTTP/2"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, true)
+            profiles["speed.cloudflare.com:443:162.159.199.2 (loc 2) HTTP/2"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, true)
+            profiles["deepseek.com:443:162.159.198.2 (loc 1) HTTP/3"] = Profile("deepseek.com", "162.159.198.2", 443, false)
+            profiles["deepseek.com:443:162.159.199.2 (loc 2) HTTP/3"] = Profile("deepseek.com", "162.159.199.2", 443, false)
+            profiles["deepseek.com:443:162.159.198.2 (loc 1) HTTP/2"] = Profile("deepseek.com", "162.159.198.2", 443, true)
+            profiles["deepseek.com:443:162.159.199.2 (loc 2) HTTP/2"] = Profile("deepseek.com", "162.159.199.2", 443, true)
             persistProfiles()
         }
         refreshProfileSpinner()
@@ -849,14 +849,14 @@ class MainActivity : Activity() {
     private fun saveAsNewProfile() {
         val base = profileNameInput.text?.toString().orEmpty().trim().ifBlank { normalizedEndpoint() }
         val name = uniqueProfileName(base)
-        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "cdnjs.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), useHttp2Switch.isChecked)
+        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), useHttp2Switch.isChecked)
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name); toast(tr("Сохранено как новый профиль: $name", "Saved as new profile: $name"))
     }
     private fun overwriteSelectedProfile() {
         val selected = selectedProfileName()
         val name = selected.ifBlank { profileNameInput.text?.toString().orEmpty().trim() }
         if (name.isBlank()) return toast(tr("Сначала выберите профиль", "Select a profile first"))
-        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "cdnjs.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), useHttp2Switch.isChecked)
+        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), useHttp2Switch.isChecked)
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name)
         if (currentProfileName() == name) { setCurrentProfileName(name); refreshHomeProfileSpinner(); updateCurrentProfileUi() }
         toast(tr("Текущий профиль перезаписан：$name", "Current profile overwritten: $name"))
@@ -890,7 +890,7 @@ class MainActivity : Activity() {
         val saved = prefs.getString("endpoint", "162.159.198.2:443") ?: "162.159.198.2:443"
         endpointInput.setText(parseEndpointHost(saved))
         portInput.setText(prefs.getInt("connectPort", parseEndpointPort(saved, 443)).toString())
-        sniInput.setText(prefs.getString("sni", "cdnjs.cloudflare.com") ?: "cdnjs.cloudflare.com")
+        sniInput.setText(prefs.getString("sni", "speed.cloudflare.com") ?: "speed.cloudflare.com")
         selectedPackages.clear(); selectedPackages.addAll(prefs.getStringSet("selectedPackages", emptySet()) ?: emptySet())
         splitModeSwitch.isChecked = prefs.getBoolean("splitMode", false)
         useHttp2Switch.isChecked = prefs.getBoolean("useHttp2", false)
@@ -1092,7 +1092,7 @@ class MainActivity : Activity() {
     }
 
     private fun startTunnelNow() {
-        val sni = sniInput.text?.toString().orEmpty().ifBlank { "cdnjs.cloudflare.com" }
+        val sni = sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }
         val endpoint = "${normalizedEndpointHost()}:${normalizedPort()}"
         val splitMode = splitModeSwitch.isChecked
         val useHttp2 = useHttp2Switch.isChecked
