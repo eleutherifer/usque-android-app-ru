@@ -1163,20 +1163,61 @@ class MainActivity : Activity() {
             textSize = 11f
             setPadding(dp(16), dp(16), dp(16), dp(16))
         }
-        val scroll = ScrollView(this).apply { addView(textView) }
+        // Ограничиваем высоту прокручиваемой области логов половиной экрана,
+        // чтобы кнопки снизу никогда не выталкивались за пределы диалога,
+        // сколько бы строк логов ни накопилось.
+        val maxLogHeight = (resources.displayMetrics.heightPixels * 0.5f).toInt()
+        val scroll = ScrollView(this).apply {
+            addView(textView)
+            layoutParams = LinearLayout.LayoutParams(-1, maxLogHeight)
+        }
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle(tr("Логи", "Logs"))
-            .setView(scroll)
-            .setPositiveButton(tr("Копировать", "Copy")) { _, _ ->
-                val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                cm.setPrimaryClip(ClipData.newPlainText("usque logs", DiagLog.getAll()))
+        // Свой ряд кнопок вместо setPositiveButton/setNeutralButton/setNegativeButton —
+        // у Material-диалогов кнопки при нехватке горизонтального места сами
+        // переключаются на вертикальную раскладку (это и происходило с более
+        // длинными русскими подписями). Так они всегда в один ряд.
+        fun makeButton(label: String): MaterialButton = MaterialButton(this).apply {
+            text = label
+            textSize = 12f
+            isAllCaps = false
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = dp(4)
+                marginEnd = dp(4)
             }
-            .setNeutralButton(tr("Очистить", "Clear")) { _, _ -> DiagLog.clear() }
-            .setNegativeButton(tr("Закрыть", "Close"), null)
-            .show()
+        }
+        val copyBtn = makeButton(tr("Копировать", "Copy"))
+        val clearBtn = makeButton(tr("Очистить", "Clear"))
+        val closeBtn = makeButton(tr("Закрыть", "Close"))
+
+        val buttonRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(12), dp(4), dp(12), dp(12))
+            addView(copyBtn)
+            addView(clearBtn)
+            addView(closeBtn)
+        }
+
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(scroll)
+            addView(buttonRow)
+        }
+
+        val dialogRef = MaterialAlertDialogBuilder(this)
+            .setTitle(tr("Логи", "Logs"))
+            .setView(root)
+            .create()
+
+        copyBtn.setOnClickListener {
+            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            cm.setPrimaryClip(ClipData.newPlainText("usque logs", DiagLog.getAll()))
+        }
+        clearBtn.setOnClickListener { DiagLog.clear(); dialogRef.dismiss() }
+        closeBtn.setOnClickListener { dialogRef.dismiss() }
+
+        dialogRef.show()
     }
-    
+
     private fun String?.ifNullOrBlank(fallback: String): String = if (this.isNullOrBlank()) fallback else this
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 
