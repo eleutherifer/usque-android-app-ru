@@ -812,7 +812,7 @@ class MainActivity : Activity() {
         val name = currentProfileName().takeIf { it.isNotBlank() } ?: profiles.keys.firstOrNull().orEmpty()
         val p = profiles[name]
         currentProfileText.text = if (p != null) {
-            val mode = if (p.http2) "HTTP/2" else "QUIC"
+            val mode = if (p.http2) "HTTP/2" else "HTTP/3"
             tr("Текущий профиль：$name · SNI ${p.sni} · ${p.endpoint}:${p.port} · $mode", "Current: $name · SNI ${p.sni} · ${p.endpoint}:${p.port} · $mode")
         } else {
             tr("Текущий профиль: не выбран", "Current profile: none")
@@ -1028,12 +1028,13 @@ class MainActivity : Activity() {
         if (statusBanner.text != state) statusBanner.text = state
         val transportLabel = if (vpnRunning) {
             val isHttp2 = runCatching { Usqueandroid.getUseHttp2() }.getOrDefault(false)
-            " · " + if (isHttp2) "HTTP/2" else "QUIC"
+            " · " + if (isHttp2) "HTTP/2" else "HTTP/3"
         } else ""
-        val ipLabel = if (vpnRunning && tunnelReallyConnected) {
-            " · IP: " + runCatching { Usqueandroid.getAssignedIPv4(configFile.absolutePath) }.getOrDefault("").ifBlank { "?" }
-        } else ""
-        val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel$ipLabel${if (extra.isNotBlank()) " · $extra" else ""}"
+//        val ipLabel = if (vpnRunning && tunnelReallyConnected) {
+//            " · IP: " + runCatching { Usqueandroid.getAssignedIPv4(configFile.absolutePath) }.getOrDefault("").ifBlank { "?" }
+//        } else ""
+//        val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel$ipLabel${if (extra.isNotBlank()) " · $extra" else ""}"
+        val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel${if (extra.isNotBlank()) " · $extra" else ""}"
         if (statusText.text != newStatusText) statusText.text = newStatusText
         val newColor = if (vpnRunning && tunnelReallyConnected) green else onPrimary
         if (statusBanner.getCurrentTextColor() != newColor) statusBanner.setTextColor(newColor) // цвет всегда дешёвая операция, можно не проверять
