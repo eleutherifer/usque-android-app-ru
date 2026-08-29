@@ -1172,18 +1172,14 @@ class MainActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(-1, maxLogHeight)
         }
 
-        // Свой ряд кнопок вместо setPositiveButton/setNeutralButton/setNegativeButton —
-        // у Material-диалогов кнопки при нехватке горизонтального места сами
-        // переключаются на вертикальную раскладку (это и происходило с более
-        // длинными русскими подписями). Так они всегда в один ряд.
-        fun makeButton(label: String): MaterialButton = MaterialButton(this).apply {
+        fun makeButton(label: String): TextView = TextView(this).apply {
             text = label
-            textSize = 12f
-            isAllCaps = false
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                marginStart = dp(4)
-                marginEnd = dp(4)
-            }
+            textSize = 13f
+            gravity = android.view.Gravity.CENTER
+            setPadding(dp(4), dp(14), dp(4), dp(14))
+            isClickable = true
+            isFocusable = true
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         val copyBtn = makeButton(tr("Копировать", "Copy"))
         val clearBtn = makeButton(tr("Очистить", "Clear"))
