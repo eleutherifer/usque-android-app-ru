@@ -134,7 +134,7 @@ docs/github-actions-signing.md
 | Parameter | Example / Default | Description |
 |-----------|-------------------|-------------|
 | SNI | `speed.cloudflare.com` | TLS SNI value used by the tunnel |
-| Endpoint | `162.159.198.2:433` | WARP / MASQUE endpoint |
+| Endpoint | `162.159.198.2:443` | WARP / MASQUE endpoint |
 | Mode | Global / Per-App | Traffic routing mode |
 
 ## 🏗️ Architecture
