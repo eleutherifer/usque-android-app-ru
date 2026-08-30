@@ -49,7 +49,7 @@ class MainActivity : Activity() {
         private const val REQ_IMPORT_FILE = 9002
     }
     data class AppEntry(val label: String, val packageName: String)
-    data class Profile(val sni: String, val endpoint: String, val port: Int, val http2: Boolean)
+    data class Profile(val sni: String, val endpoint: String, val port: Int, val transportPolicy: String)
 
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executors.newSingleThreadExecutor()
@@ -72,7 +72,7 @@ class MainActivity : Activity() {
     private lateinit var modeValue: TextView
     private lateinit var modeHint: TextView
     private lateinit var splitModeSwitch: MaterialSwitch
-    private lateinit var useHttp2Switch: MaterialSwitch
+    private lateinit var transportPolicySpinner: Spinner
     private lateinit var appSearchInput: TextInputEditText
     private lateinit var appSection: MaterialCardView
     private lateinit var appListContainer: LinearLayout
@@ -291,7 +291,7 @@ class MainActivity : Activity() {
         showIndex(0)
 
         defaultBtn.setOnClickListener {
-            val defaultEndpoint = Usqueandroid.getDefaultEndpoint(configFile.absolutePath, useHttp2Switch.isChecked)
+            val defaultEndpoint = Usqueandroid.getDefaultEndpoint(configFile.absolutePath, transportPolicyFromSpinner() == "http2")
             endpointInput.setText(parseEndpointHost(defaultEndpoint))
             portInput.setText(parseEndpointPort(defaultEndpoint, 443).toString())
             refreshState(tr("Загружен endpoint по умолчанию", "Default endpoint loaded"))
@@ -527,19 +527,22 @@ class MainActivity : Activity() {
         sniInput = input("SNI", "speed.cloudflare.com")
         endpointInput = input("Endpoint IP", "162.159.198.2")
         portInput = input("Connect Port", "443")
-        useHttp2Switch = MaterialSwitch(this).apply {
-//            text = tr("HTTP/2 вместо QUIC (обход блокировки UDP)", "HTTP/2 instead of QUIC (bypass UDP blocking)")
-            text = tr("HTTP/2 вместо HTTP/3", "HTTP/2 instead of HTTP/3")
-            textSize = 16f
-            setTextColor(textColor)
-            setPadding(0, dp(6), 0, 0)
-            setOnCheckedChangeListener { _, _ -> markDirty() }
+        transportPolicySpinner = Spinner(this).apply {
+            adapter = ArrayAdapter(
+                this@MainActivity,
+                android.R.layout.simple_spinner_dropdown_item,
+                listOf(tr("Авто (HTTP/3 → HTTP/2)", "Auto (HTTP/3 → HTTP/2)"), "HTTP/3", "HTTP/2")
+            )
+            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) { markDirty() }
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+            }
         }
         defaultBtn = secondaryButton(tr("Загрузить endpoint по умолчанию", "Load Default Endpoint"))
         configBox.addView(compactInputWrap("SNI", sniInput))
         configBox.addView(compactInputWrap("Endpoint IP", endpointInput))
         configBox.addView(compactInputWrap("Connect Port", portInput))
-        configBox.addView(useHttp2Switch, LinearLayout.LayoutParams(-1, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(4) })
+        configBox.addView(transportPolicySpinner, LinearLayout.LayoutParams(-1, dp(42)).apply { topMargin = dp(4) })
         configBox.addView(defaultBtn, LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(3) })
         config.addView(configBox)
         content.addView(config)
@@ -723,13 +726,37 @@ class MainActivity : Activity() {
         val base = if (configDirty) tr("Конфиг: не сохранен, при подключении сохранится автоматически", "Config: unsaved, will auto-save on connect") else tr("Конфиг: сохранен", "Config: saved")
         configStateText.text = if (extra.isBlank()) base else "$base · $extra"
     }
+    private val transportPolicyValues = listOf("auto", "http3", "http2")
+    private fun transportPolicyDisplayName(policy: String): String = when (policy) {
+        "http2" -> "HTTP/2"
+        "http3" -> "HTTP/3"
+        else -> tr("Авто", "Auto")
+    }
+    private fun transportPolicyFromSpinner(): String =
+        transportPolicyValues.getOrNull(transportPolicySpinner.selectedItemPosition) ?: "auto"
+    private fun setTransportPolicySpinner(policy: String) {
+        val index = transportPolicyValues.indexOf(policy).coerceAtLeast(0)
+        transportPolicySpinner.setSelection(index, false)
+    }
+    // Переход со старого булева поля (до появления режима "Авто"): если новое
+    // строковое поле уже есть — берём его, иначе трактуем старое true/false
+    // как http2/http3 соответственно.
+    private fun readTransportPolicyFromJson(o: JSONObject, newKey: String = "transportPolicy", oldBoolKey: String = "http2"): String {
+        if (o.has(newKey)) return o.optString(newKey, "auto")
+        return if (o.optBoolean(oldBoolKey, false)) "http2" else "http3"
+    }
+    private fun readTransportPolicyPref(): String {
+        prefs.getString("transportPolicy", null)?.let { return it }
+        return if (prefs.getBoolean("useHttp2", false)) "http2" else "http3"
+    }
+
     private fun saveInputs() {
         prefs.edit()
             .putString("sni", sniInput.text?.toString().orEmpty())
             .putString("endpoint", normalizedEndpoint())
             .putInt("connectPort", normalizedPort())
             .putBoolean("splitMode", splitModeSwitch.isChecked)
-            .putBoolean("useHttp2", useHttp2Switch.isChecked)
+            .putString("transportPolicy", transportPolicyFromSpinner())
             .putStringSet("selectedPackages", selectedPackages.toSet())
             .apply()
         configDirty = false
@@ -746,19 +773,21 @@ class MainActivity : Activity() {
                     o.optString("sni", "speed.cloudflare.com"),
                     o.optString("endpoint", "162.159.198.2"),
                     o.optInt("port", 443),
-                    o.optBoolean("http2", false)  // у старых профилей в JSON этого поля нет — optBoolean тихо даст false, ничего не сломается
+                    readTransportPolicyFromJson(o)  // у старых профилей в JSON нет "transportPolicy" — тогда переходим со старого булева "http2"
                 )
             }
         }
         if (profiles.isEmpty()) {
-            profiles["speed.cloudflare.com:443:162.159.198.2 (loc 1) HTTP/3"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, false)
-            profiles["speed.cloudflare.com:443:162.159.199.2 (loc 2) HTTP/3"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, false)
-            profiles["speed.cloudflare.com:443:162.159.198.2 (loc 1) HTTP/2"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, true)
-            profiles["speed.cloudflare.com:443:162.159.199.2 (loc 2) HTTP/2"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, true)
-            profiles["deepseek.com:443:162.159.198.2 (loc 1) HTTP/3"] = Profile("deepseek.com", "162.159.198.2", 443, false)
-            profiles["deepseek.com:443:162.159.199.2 (loc 2) HTTP/3"] = Profile("deepseek.com", "162.159.199.2", 443, false)
-            profiles["deepseek.com:443:162.159.198.2 (loc 1) HTTP/2"] = Profile("deepseek.com", "162.159.198.2", 443, true)
-            profiles["deepseek.com:443:162.159.199.2 (loc 2) HTTP/2"] = Profile("deepseek.com", "162.159.199.2", 443, true)
+            profiles["speed.cloudflare.com:443:162.159.198.2 (loc 1) HTTP/3"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, "auto")
+            profiles["speed.cloudflare.com:443:162.159.198.2 (loc 1) HTTP/3"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, "http3")
+            profiles["speed.cloudflare.com:443:162.159.199.2 (loc 2) HTTP/3"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, "http3")
+            profiles["speed.cloudflare.com:443:162.159.198.2 (loc 1) HTTP/2"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, "http2")
+            profiles["speed.cloudflare.com:443:162.159.199.2 (loc 2) HTTP/2"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, "http2")
+            profiles["deepseek.com:443:162.159.198.2 (loc 1) HTTP/3"] = Profile("deepseek.com", "162.159.198.2", 443, "auto")
+            profiles["deepseek.com:443:162.159.198.2 (loc 1) HTTP/3"] = Profile("deepseek.com", "162.159.198.2", 443, "http3")
+            profiles["deepseek.com:443:162.159.199.2 (loc 2) HTTP/3"] = Profile("deepseek.com", "162.159.199.2", 443, "http3")
+            profiles["deepseek.com:443:162.159.198.2 (loc 1) HTTP/2"] = Profile("deepseek.com", "162.159.198.2", 443, "http2")
+            profiles["deepseek.com:443:162.159.199.2 (loc 2) HTTP/2"] = Profile("deepseek.com", "162.159.199.2", 443, "http2")
             persistProfiles()
         }
         refreshProfileSpinner()
@@ -766,7 +795,7 @@ class MainActivity : Activity() {
     private fun persistProfiles() {
         val arr = JSONArray()
         profiles.forEach { (name, v) ->
-            arr.put(JSONObject().put("name", name).put("sni", v.sni).put("endpoint", v.endpoint).put("port", v.port).put("http2", v.http2))
+            arr.put(JSONObject().put("name", name).put("sni", v.sni).put("endpoint", v.endpoint).put("port", v.port).put("transportPolicy", v.transportPolicy))
         }
         prefs.edit().putString("profilesJson", arr.toString()).apply()
     }
@@ -812,7 +841,7 @@ class MainActivity : Activity() {
         val name = currentProfileName().takeIf { it.isNotBlank() } ?: profiles.keys.firstOrNull().orEmpty()
         val p = profiles[name]
         currentProfileText.text = if (p != null) {
-            val mode = if (p.http2) "HTTP/2" else "HTTP/3"
+            val mode = transportPolicyDisplayName(p.transportPolicy)
             tr("Текущий профиль：$name · SNI ${p.sni} · ${p.endpoint}:${p.port} · $mode", "Current: $name · SNI ${p.sni} · ${p.endpoint}:${p.port} · $mode")
         } else {
             tr("Текущий профиль: не выбран", "Current profile: none")
@@ -842,21 +871,21 @@ class MainActivity : Activity() {
         sniInput.setText(p.sni)
         endpointInput.setText(p.endpoint)
         portInput.setText(p.port.toString())
-        useHttp2Switch.isChecked = p.http2
+        setTransportPolicySpinner(p.transportPolicy)
         profileNameInput.setText(name)
         if (persist) { markDirty(); saveInputs() }
     }
     private fun saveAsNewProfile() {
         val base = profileNameInput.text?.toString().orEmpty().trim().ifBlank { normalizedEndpoint() }
         val name = uniqueProfileName(base)
-        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), useHttp2Switch.isChecked)
+        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), transportPolicyFromSpinner())
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name); toast(tr("Сохранено как новый профиль: $name", "Saved as new profile: $name"))
     }
     private fun overwriteSelectedProfile() {
         val selected = selectedProfileName()
         val name = selected.ifBlank { profileNameInput.text?.toString().orEmpty().trim() }
         if (name.isBlank()) return toast(tr("Сначала выберите профиль", "Select a profile first"))
-        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), useHttp2Switch.isChecked)
+        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), transportPolicyFromSpinner())
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name)
         if (currentProfileName() == name) { setCurrentProfileName(name); refreshHomeProfileSpinner(); updateCurrentProfileUi() }
         toast(tr("Текущий профиль перезаписан：$name", "Current profile overwritten: $name"))
@@ -893,7 +922,7 @@ class MainActivity : Activity() {
         sniInput.setText(prefs.getString("sni", "speed.cloudflare.com") ?: "speed.cloudflare.com")
         selectedPackages.clear(); selectedPackages.addAll(prefs.getStringSet("selectedPackages", emptySet()) ?: emptySet())
         splitModeSwitch.isChecked = prefs.getBoolean("splitMode", false)
-        useHttp2Switch.isChecked = prefs.getBoolean("useHttp2", false)
+        setTransportPolicySpinner(readTransportPolicyPref())
         if (currentProfileName().isBlank() && profiles.isNotEmpty()) setCurrentProfileName(profiles.keys.first())
         configDirty = false
         updateConfigState(); updateModeUi(); refreshHomeProfileSpinner(); updateCurrentProfileUi()
@@ -1027,13 +1056,9 @@ class MainActivity : Activity() {
         }
         if (statusBanner.text != state) statusBanner.text = state
         val transportLabel = if (vpnRunning) {
-            val isHttp2 = runCatching { Usqueandroid.getUseHttp2() }.getOrDefault(false)
-            " · " + if (isHttp2) "HTTP/2" else "HTTP/3"
+            val policy = runCatching { Usqueandroid.getTransportPolicy() }.getOrDefault("auto")
+            " · " + transportPolicyDisplayName(policy)
         } else ""
-//        val ipLabel = if (vpnRunning && tunnelReallyConnected) {
-//            " · IP: " + runCatching { Usqueandroid.getAssignedIPv4(configFile.absolutePath) }.getOrDefault("").ifBlank { "?" }
-//        } else ""
-//        val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel$ipLabel${if (extra.isNotBlank()) " · $extra" else ""}"
         val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel${if (extra.isNotBlank()) " · $extra" else ""}"
         if (statusText.text != newStatusText) statusText.text = newStatusText
         val newColor = if (vpnRunning && tunnelReallyConnected) green else onPrimary
@@ -1096,7 +1121,7 @@ class MainActivity : Activity() {
         val sni = sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }
         val endpoint = "${normalizedEndpointHost()}:${normalizedPort()}"
         val splitMode = splitModeSwitch.isChecked
-        val useHttp2 = useHttp2Switch.isChecked
+        val transportPolicy = transportPolicyFromSpinner()
         val allowedApps = if (splitMode) selectedPackagesForVpn() else arrayListOf()
         log(if (splitMode) tr("Запуск раздельного VPN: ${allowedApps.size} прил. · $endpoint", "Starting split VPN: ${allowedApps.size} apps · $endpoint") else tr("Запуск глобального VPN: $endpoint", "Starting global VPN: $endpoint"))
         resetSpeedMeter()
@@ -1107,7 +1132,7 @@ class MainActivity : Activity() {
             .putExtra("sni", sni)
             .putExtra("endpoint", endpoint)
             .putExtra("splitMode", splitMode)
-            .putExtra("useHttp2", useHttp2)
+            .putExtra("transportPolicy", transportPolicy)
             .putStringArrayListExtra("allowedApps", allowedApps)
         startService(intent)
         log(tr("Служба VPN успешно запущена", "VPN service started"))
@@ -1262,7 +1287,7 @@ class MainActivity : Activity() {
         p.put("sni", prefs.getString("sni", ""))
         p.put("endpoint", prefs.getString("endpoint", ""))
         p.put("connectPort", prefs.getInt("connectPort", 443))
-        p.put("useHttp2", prefs.getBoolean("useHttp2", false))
+        p.put("transportPolicy", readTransportPolicyPref())
         p.put("splitMode", prefs.getBoolean("splitMode", false))
         p.put("currentProfileName", prefs.getString("currentProfileName", ""))
         p.put("useEnglish", prefs.getBoolean("useEnglish", false))
@@ -1299,7 +1324,12 @@ class MainActivity : Activity() {
                 if (p.has("sni")) e.putString("sni", p.getString("sni"))
                 if (p.has("endpoint")) e.putString("endpoint", p.getString("endpoint"))
                 if (p.has("connectPort")) e.putInt("connectPort", p.getInt("connectPort"))
-                if (p.has("useHttp2")) e.putBoolean("useHttp2", p.getBoolean("useHttp2"))
+                if (p.has("transportPolicy")) {
+                    e.putString("transportPolicy", p.getString("transportPolicy"))
+                } else if (p.has("useHttp2")) {
+                    // Импорт старого экспорта (до "Авто") — переносим булево значение как http2/http3.
+                    e.putString("transportPolicy", if (p.getBoolean("useHttp2")) "http2" else "http3")
+                }
                 if (p.has("splitMode")) e.putBoolean("splitMode", p.getBoolean("splitMode"))
                 if (p.has("currentProfileName")) e.putString("currentProfileName", p.getString("currentProfileName"))
                 if (p.has("useEnglish")) e.putBoolean("useEnglish", p.getBoolean("useEnglish"))

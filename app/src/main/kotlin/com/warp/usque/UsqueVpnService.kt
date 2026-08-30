@@ -48,7 +48,7 @@ class UsqueVpnService : VpnService() {
     @Volatile private var lastSni: String = ""
     @Volatile private var lastEndpoint: String = ""
     @Volatile private var lastSplitMode: Boolean = false
-    @Volatile private var lastUseHttp2: Boolean = false    
+    @Volatile private var lastTransportPolicy: String = "auto"
     @Volatile private var lastAllowedApps: ArrayList<String> = arrayListOf()
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -69,34 +69,34 @@ class UsqueVpnService : VpnService() {
         val sni = intent?.getStringExtra("sni") ?: "speed.cloudflare.com"
         val endpoint = intent?.getStringExtra("endpoint") ?: "162.159.198.2:443"
         val splitMode = intent?.getBooleanExtra("splitMode", false) ?: false
-        val useHttp2 = intent?.getBooleanExtra("useHttp2", false) ?: false
+        val transportPolicy = intent?.getStringExtra("transportPolicy") ?: "auto"
         val allowedApps = intent?.getStringArrayListExtra("allowedApps") ?: arrayListOf()
 
         lastConfigPath = configPath
         lastSni = sni
         lastEndpoint = endpoint
         lastSplitMode = splitMode
-        lastUseHttp2 = useHttp2
+        lastTransportPolicy = transportPolicy
         lastAllowedApps = ArrayList(allowedApps)
 
         if (running.get()) return Service.START_STICKY
-        executor.execute { startNativeTunnel(configPath, sni, endpoint, splitMode, useHttp2, allowedApps) }
+        executor.execute { startNativeTunnel(configPath, sni, endpoint, splitMode, transportPolicy, allowedApps) }
         return Service.START_STICKY
     }
 
-    private fun startNativeTunnel(configPath: String, sni: String, endpoint: String, splitMode: Boolean, useHttp2: Boolean, allowedApps: ArrayList<String>) {
+    private fun startNativeTunnel(configPath: String, sni: String, endpoint: String, splitMode: Boolean, transportPolicy: String, allowedApps: ArrayList<String>) {
         try {
             manualStop.set(false)
             running.set(true)
             isServiceRunning = true
             isServiceConnected = false
             Log.i(TAG, "starting vpn service endpoint=$endpoint sni=$sni splitMode=$splitMode allowedApps=${allowedApps.size} config=$configPath")
-            DiagLog.add("Service", "start endpoint=$endpoint sni=$sni http2=$useHttp2 split=$splitMode")
+            DiagLog.add("Service", "start endpoint=$endpoint sni=$sni transport=$transportPolicy split=$splitMode")
             Usqueandroid.resetConnectionOptions()
             Usqueandroid.setSNI(sni)
             Usqueandroid.setEndpoint(endpoint)
 
-            Usqueandroid.setUseHttp2(useHttp2)
+            Usqueandroid.setTransportPolicy(transportPolicy)
 
             Log.i(TAG, "native endpoint now=${runCatching { Usqueandroid.getEndpoint() }.getOrDefault("")}")
 
@@ -207,7 +207,7 @@ class UsqueVpnService : VpnService() {
             // Allow a failed retry to schedule another retry instead of getting stuck after one attempt.
             restarting.set(false)
             startForegroundCompat()
-            startNativeTunnel(lastConfigPath, lastSni, lastEndpoint, lastSplitMode, lastUseHttp2, ArrayList(lastAllowedApps))
+            startNativeTunnel(lastConfigPath, lastSni, lastEndpoint, lastSplitMode, lastTransportPolicy, ArrayList(lastAllowedApps))
         }
     }
 
