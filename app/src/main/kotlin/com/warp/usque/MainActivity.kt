@@ -1057,10 +1057,20 @@ class MainActivity : Activity() {
             else -> tr("Подключение…", "Connecting…")
         }
         if (statusBanner.text != state) statusBanner.text = state
-        val transportLabel = if (vpnRunning) {
-            val active = runCatching { Usqueandroid.getActiveTransport() }.getOrDefault("http3")
-            " · " + transportPolicyDisplayName(active)
-        } else ""
+        val transportLabel = when {
+            !vpnRunning -> ""
+            tunnelReallyConnected -> {
+                // Уже подключено — показываем, что реально используется сейчас.
+                val active = runCatching { Usqueandroid.getActiveTransport() }.getOrDefault("http3")
+                " · " + transportPolicyDisplayName(active)
+            }
+            else -> {
+                // Ещё устанавливается — реального транспорта пока нет (могло
+                // остаться от прошлого сеанса), показываем настроенную стратегию.
+                val policy = runCatching { Usqueandroid.getTransportPolicy() }.getOrDefault("auto")
+                " · " + transportPolicyDisplayName(policy)
+            }
+        }
         val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel${if (extra.isNotBlank()) " · $extra" else ""}"
         if (statusText.text != newStatusText) statusText.text = newStatusText
         val newColor = if (vpnRunning && tunnelReallyConnected) green else onPrimary
