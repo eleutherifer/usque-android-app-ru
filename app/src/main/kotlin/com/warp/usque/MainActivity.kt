@@ -1058,8 +1058,8 @@ class MainActivity : Activity() {
         }
         if (statusBanner.text != state) statusBanner.text = state
         val transportLabel = if (vpnRunning) {
-            val policy = runCatching { Usqueandroid.getTransportPolicy() }.getOrDefault("auto")
-            " · " + transportPolicyDisplayName(policy)
+            val active = runCatching { Usqueandroid.getActiveTransport() }.getOrDefault("http3")
+            " · " + transportPolicyDisplayName(active)
         } else ""
         val newStatusText = "${tr("Статус", "Status")}: $state$transportLabel${if (extra.isNotBlank()) " · $extra" else ""}"
         if (statusText.text != newStatusText) statusText.text = newStatusText
