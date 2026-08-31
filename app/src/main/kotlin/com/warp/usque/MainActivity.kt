@@ -779,17 +779,9 @@ class MainActivity : Activity() {
         }
         if (profiles.isEmpty()) {
             profiles["speed.cloudflare.com, loc 1, Auto"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, "auto")
-            profiles["speed.cloudflare.com, loc 1, HTTP/3"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, "http3")
-            profiles["speed.cloudflare.com, loc 1, HTTP/2"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, "http2")
             profiles["speed.cloudflare.com, loc 2, Auto"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, "auto")
-            profiles["speed.cloudflare.com, loc 2, HTTP/3"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, "http3")
-            profiles["speed.cloudflare.com, loc 2, HTTP/2"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, "http2")
             profiles["deepseek.com, loc 1, Auto"] = Profile("deepseek.com", "162.159.198.2", 443, "auto")
-            profiles["deepseek.com, loc 1, HTTP/3"] = Profile("deepseek.com", "162.159.198.2", 443, "http3")
-            profiles["deepseek.com, loc 1, HTTP/2"] = Profile("deepseek.com", "162.159.198.2", 443, "http2")
             profiles["deepseek.com, loc 2, Auto"] = Profile("deepseek.com", "162.159.199.2", 443, "auto")
-            profiles["deepseek.com, loc 2, HTTP/3"] = Profile("deepseek.com", "162.159.199.2", 443, "http3")
-            profiles["deepseek.com, loc 2, HTTP/2"] = Profile("deepseek.com", "162.159.199.2", 443, "http2")
             persistProfiles()
         }
         refreshProfileSpinner()
