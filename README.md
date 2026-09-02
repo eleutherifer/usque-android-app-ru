@@ -1,6 +1,6 @@
 # В данном форке:
 - заменена используемая для регистрации ссылка на API на незабаненную ссылку на API для ZT
-- заменена конечная точка по умолчанию на speed.cloudflare.com:443
+- заменена конечная точка по умолчанию на deepseek.com:443
 - китайский язык заменён на русский
 - обновлена библиотека Usque на версию v4.2.1
 - добавлен режим HTTP/2
@@ -134,7 +134,7 @@ docs/github-actions-signing.md
 
 | Parameter | Example / Default | Description |
 |-----------|-------------------|-------------|
-| SNI | `speed.cloudflare.com` | TLS SNI value used by the tunnel |
+| SNI | `deepseek.com` | TLS SNI value used by the tunnel |
 | Endpoint | `162.159.198.2:443` | WARP / MASQUE endpoint |
 | Mode | Global / Per-App | Traffic routing mode |
 

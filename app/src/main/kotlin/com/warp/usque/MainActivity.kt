@@ -456,7 +456,7 @@ class MainActivity : Activity() {
         val profileCard = card()
         val profileBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(10)) }
         profileSpinner = Spinner(this).apply { background = round(surface2, dp(16), outline); setPadding(dp(10), 0, dp(10), 0) }
-        profileNameInput = input(tr("Название профиля", "Profile Name"), tr("Например：speed.cloudflare.com 443 / speed.cloudflare.com 8443", "e.g. speed.cloudflare.com 443 / speed.cloudflare.com 8443"))
+        profileNameInput = input(tr("Название профиля", "Profile Name"), tr("Например：deepseek.com 443 / deepseek.com 8443", "e.g. deepseek.com 443 / deepseek.com 8443"))
         saveNewProfileBtn = secondaryButton(tr("Сохранить как новый", "Save as New"))
         overwriteProfileBtn = secondaryButton(tr("Перезаписать текущий", "Overwrite Current"))
         deleteProfileBtn = secondaryButton(tr("Удалить выбранный профиль", "Delete Profile"))
@@ -524,7 +524,7 @@ class MainActivity : Activity() {
         content.addView(sectionTitle(tr("Текущие параметры подключения", "Current Connection")))
         val config = card()
         val configBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(8)) }
-        sniInput = input("SNI", "speed.cloudflare.com")
+        sniInput = input("SNI", "deepseek.com")
         endpointInput = input("Endpoint IP", "162.159.198.2")
         portInput = input("Connect Port", "443")
         transportPolicySpinner = Spinner(this).apply {
@@ -770,7 +770,7 @@ class MainActivity : Activity() {
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
                 profiles[o.getString("name")] = Profile(
-                    o.optString("sni", "speed.cloudflare.com"),
+                    o.optString("sni", "deepseek.com"),
                     o.optString("endpoint", "162.159.198.2"),
                     o.optInt("port", 443),
                     readTransportPolicyFromJson(o)  // у старых профилей в JSON нет "transportPolicy" — тогда переходим со старого булева "http2"
@@ -778,10 +778,14 @@ class MainActivity : Activity() {
             }
         }
         if (profiles.isEmpty()) {
-            profiles["speed.cloudflare.com, loc 1, Auto"] = Profile("speed.cloudflare.com", "162.159.198.2", 443, "auto")
-            profiles["speed.cloudflare.com, loc 2, Auto"] = Profile("speed.cloudflare.com", "162.159.199.2", 443, "auto")
-            profiles["deepseek.com, loc 1, Auto"] = Profile("deepseek.com", "162.159.198.2", 443, "auto")
-            profiles["deepseek.com, loc 2, Auto"] = Profile("deepseek.com", "162.159.199.2", 443, "auto")
+            profiles["deepseek.com, colo 1, Auto"] = Profile("deepseek.com", "162.159.198.2", 443, "auto")
+            profiles["deepseek.com, colo 2, Auto"] = Profile("deepseek.com", "162.159.199.2", 443, "auto")
+            profiles["deepseek.com, colo 1, h2"] = Profile("deepseek.com", "162.159.198.2", 443, "http2")
+            profiles["deepseek.com, colo 2, h2"] = Profile("deepseek.com", "162.159.199.2", 443, "http2")
+            profiles["apteka.ru, colo 1, Auto"] = Profile("apteka.ru", "162.159.198.2", 443, "auto")
+            profiles["apteka.ru, colo 2, Auto"] = Profile("apteka.ru", "162.159.199.2", 443, "auto")
+            profiles["apteka.ru, colo 1, h2"] = Profile("apteka.ru", "162.159.198.2", 443, "http2")
+            profiles["apteka.ru, colo 2, h2"] = Profile("apteka.ru", "162.159.199.2", 443, "http2")
             persistProfiles()
         }
         refreshProfileSpinner()
@@ -872,14 +876,14 @@ class MainActivity : Activity() {
     private fun saveAsNewProfile() {
         val base = profileNameInput.text?.toString().orEmpty().trim().ifBlank { normalizedEndpoint() }
         val name = uniqueProfileName(base)
-        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), transportPolicyFromSpinner())
+        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "deepseek.com" }, normalizedEndpointHost(), normalizedPort(), transportPolicyFromSpinner())
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name); toast(tr("Сохранено как новый профиль: $name", "Saved as new profile: $name"))
     }
     private fun overwriteSelectedProfile() {
         val selected = selectedProfileName()
         val name = selected.ifBlank { profileNameInput.text?.toString().orEmpty().trim() }
         if (name.isBlank()) return toast(tr("Сначала выберите профиль", "Select a profile first"))
-        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }, normalizedEndpointHost(), normalizedPort(), transportPolicyFromSpinner())
+        profiles[name] = Profile(sniInput.text?.toString().orEmpty().ifBlank { "deepseek.com" }, normalizedEndpointHost(), normalizedPort(), transportPolicyFromSpinner())
         persistProfiles(); refreshProfileSpinner(); profileNameInput.setText(name); syncConfigProfileSpinner(name)
         if (currentProfileName() == name) { setCurrentProfileName(name); refreshHomeProfileSpinner(); updateCurrentProfileUi() }
         toast(tr("Текущий профиль перезаписан：$name", "Current profile overwritten: $name"))
@@ -913,7 +917,7 @@ class MainActivity : Activity() {
         val saved = prefs.getString("endpoint", "162.159.198.2:443") ?: "162.159.198.2:443"
         endpointInput.setText(parseEndpointHost(saved))
         portInput.setText(prefs.getInt("connectPort", parseEndpointPort(saved, 443)).toString())
-        sniInput.setText(prefs.getString("sni", "speed.cloudflare.com") ?: "speed.cloudflare.com")
+        sniInput.setText(prefs.getString("sni", "deepseek.com") ?: "deepseek.com")
         selectedPackages.clear(); selectedPackages.addAll(prefs.getStringSet("selectedPackages", emptySet()) ?: emptySet())
         splitModeSwitch.isChecked = prefs.getBoolean("splitMode", false)
         setTransportPolicySpinner(readTransportPolicyPref())
@@ -1122,7 +1126,7 @@ class MainActivity : Activity() {
     }
 
     private fun startTunnelNow() {
-        val sni = sniInput.text?.toString().orEmpty().ifBlank { "speed.cloudflare.com" }
+        val sni = sniInput.text?.toString().orEmpty().ifBlank { "deepseek.com" }
         val endpoint = "${normalizedEndpointHost()}:${normalizedPort()}"
         val splitMode = splitModeSwitch.isChecked
         val transportPolicy = transportPolicyFromSpinner()
