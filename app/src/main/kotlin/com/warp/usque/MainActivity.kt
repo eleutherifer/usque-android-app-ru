@@ -778,14 +778,10 @@ class MainActivity : Activity() {
             }
         }
         if (profiles.isEmpty()) {
-            profiles["deepseek.com, colo 1, Auto"] = Profile("deepseek.com", "162.159.198.2", 443, "auto")
-            profiles["deepseek.com, colo 2, Auto"] = Profile("deepseek.com", "162.159.199.2", 443, "auto")
-            profiles["deepseek.com, colo 1, h2"] = Profile("deepseek.com", "162.159.198.2", 443, "http2")
-            profiles["deepseek.com, colo 2, h2"] = Profile("deepseek.com", "162.159.199.2", 443, "http2")
-            profiles["apteka.ru, colo 1, Auto"] = Profile("apteka.ru", "162.159.198.2", 443, "auto")
-            profiles["apteka.ru, colo 2, Auto"] = Profile("apteka.ru", "162.159.199.2", 443, "auto")
-            profiles["apteka.ru, colo 1, h2"] = Profile("apteka.ru", "162.159.198.2", 443, "http2")
-            profiles["apteka.ru, colo 2, h2"] = Profile("apteka.ru", "162.159.199.2", 443, "http2")
+            profiles["deepseek.com:500, colo1, auto"] = Profile("deepseek.com", "162.159.198.2", 500, "auto")
+            profiles["deepseek.com:500, colo2, auto"] = Profile("deepseek.com", "162.159.199.2", 500, "auto")
+            profiles["deepseek.com:443, colo1, auto"] = Profile("deepseek.com", "162.159.198.2", 443, "auto")
+            profiles["deepseek.com:443, colo2, auto"] = Profile("deepseek.com", "162.159.199.2", 443, "auto")
             persistProfiles()
         }
         refreshProfileSpinner()
